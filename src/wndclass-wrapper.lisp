@@ -1,0 +1,64 @@
+(in-package #:winutil)
+
+(defclass wndclass-wrapper (disposable)
+  ((%name
+    :type string
+    :initform (format nil "Wndclass-Wrapper[~A(~A);~A]"
+                      (lisp-implementation-type)
+                      (lisp-implementation-version)
+                      (%make-guid))
+    :initarg :name
+    :reader wndclass-wrapper-name)
+   (%instance
+    :type cffi:foreign-pointer
+    :initarg :instance
+    :initform (win32:get-module-handle (cffi:null-pointer))
+    :reader wndclass-wrapper-instance)
+   (%class-atom
+    :type cffi:foreign-pointer
+    :reader wndclass-wrapper-atom)))
+
+(defmethod initialize-instance :after ((obj wndclass-wrapper)
+                                       &key
+                                         (class-style 0)
+                                         (wndproc (cffi:foreign-symbol-pointer "DefWindowProcW" :library 'win32:user32))
+                                         (cls-extra 0)
+                                         (wnd-extra 0)
+                                         (icon (cffi:null-pointer))
+                                         (cursor (win32:load-cursor (cffi:null-pointer) win32:+idc-arrow+))
+                                         (background (cffi:make-pointer (1+ win32:+color-window+)))
+                                         (menu-name (cffi:null-pointer))
+                                         (icon-sm (cffi:null-pointer))
+                                       &allow-other-keys)
+  (cffi:with-foreign-object (class 'win32:wndclassex)
+    (%zero-memory class 'win32:wndclassex)
+    (cffi:with-foreign-slots ((win32:size win32:style win32:wndproc
+                                          win32:cls-extra win32:wnd-extra
+                                          win32:instance
+                                          win32:icon win32:cursor
+                                          win32:background win32:menu-name
+                                          win32:wndclass-name win32:icon-sm)
+                              class win32:wndclassex)
+      (setf win32:size (cffi:foreign-type-size 'win32:wndclassex)
+            win32:style class-style
+            win32:wndproc wndproc
+            win32:cls-extra cls-extra
+            win32:wnd-extra wnd-extra
+            win32:instance (wndclass-wrapper-instance obj)
+            win32:icon icon
+            win32:cursor cursor
+            win32:background background
+            win32:menu-name menu-name
+            win32:wndclass-name (wndclass-wrapper-name obj)
+            win32:icon-sm icon-sm))
+    (setf (slot-value obj '%class-atom) (cffi:make-pointer (win32:register-class-ex class)))))
+
+(define-dispose (obj wndclass-wrapper)
+  (win32:unregister-class (wndclass-wrapper-atom obj) (wndclass-wrapper-instance obj))
+  (slot-makunbound obj '%class-atom))
+
+(defmethod wndclass-name ((obj wndclass-wrapper))
+  (wndclass-wrapper-atom obj))
+
+(defmethod wndclass-instance ((obj wndclass-wrapper))
+  (wndclass-wrapper-instance obj))
