@@ -64,7 +64,7 @@ Returns two values:
   (:report (lambda (c stream)
              (format stream "Win32 error ~D~:* (0x~X): \"~:[<unavailable>~;~:*~A~]\"" (win32-error-code c) (win32-error-string c)))))
 
-(defun win32-error (code)
+(defun win32-error (&optional (code (win32:get-last-error)))
   "Signals an error of type `win32-error' using `code' as the error code"
   (error 'win32-error :code code :string (error-code-string code)))
 
