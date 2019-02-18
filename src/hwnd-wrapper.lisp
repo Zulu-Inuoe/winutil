@@ -22,7 +22,7 @@
                                        &allow-other-keys)
   (setf (slot-value obj '%hwnd)
         (win32:create-window-ex
-         ex-style (wndclass-name wndclass) name style
+         ex-style (wndclass-atom wndclass) name style
          x y width height
          (hwnd parent) menu instance lparam)))
 

@@ -24,6 +24,10 @@
    #:defwndproc
    #:message-pump
 
+   #:wndclass-name
+   #:wndclass-instance
+   #:wndclass-atom
+
    #:wndclass-wrapper
    #:wndclass-wrapper-name
    #:wndclass-wrapper-instance

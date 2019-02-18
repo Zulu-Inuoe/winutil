@@ -123,3 +123,12 @@ Ensures correct context and dispatches to `window-wndproc'"
 
 (defmethod hwnd ((obj window))
   (window-hwnd obj))
+
+(defmethod wndclass-name ((obj window))
+  (window-wndclass-name obj))
+
+(defmethod wndclass-instance ((obj window))
+  (window-instance obj))
+
+(defmethod wndclass-atom ((obj window))
+  (window-class-atom obj))

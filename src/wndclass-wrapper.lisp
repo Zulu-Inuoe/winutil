@@ -58,7 +58,10 @@
   (slot-makunbound obj '%class-atom))
 
 (defmethod wndclass-name ((obj wndclass-wrapper))
-  (wndclass-wrapper-atom obj))
+  (wndclass-wrapper-name obj))
 
 (defmethod wndclass-instance ((obj wndclass-wrapper))
   (wndclass-wrapper-instance obj))
+
+(defmethod wndclass-atom ((obj wndclass-wrapper))
+  (wndclass-wrapper-atom obj))
