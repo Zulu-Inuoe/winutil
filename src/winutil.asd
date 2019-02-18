@@ -14,7 +14,8 @@
    (:file "hwnd-wrapper" :depends-on ("package" "wndclass" "hwnd"))
    (:file "hmenu-wrapper" :depends-on ("package"))
    (:file "tray-icon-wrapper" :depends-on ("package"))
-   (:file "window" :depends-on ("package" "hwnd")))
+   (:file "window" :depends-on ("package" "hwnd"))
+   (:file "message-only-window" :depends-on ("package" "window")))
   :depends-on
   (#:alexandria
    #:dispose
