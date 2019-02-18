@@ -7,6 +7,7 @@
   ((:file "package")
    (:file "util" :depends-on ("package"))
    (:file "ui-util" :depends-on ("package"))
+   (:file "clipboard" :depends-on ("package" "util"))
    (:file "wndclass" :depends-on ("package"))
    (:file "wndclass-wrapper" :depends-on ("package" "wndclass"))
    (:file "hwnd" :depends-on ("package" "util"))

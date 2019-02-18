@@ -24,6 +24,10 @@
    #:defwndproc
    #:message-pump
 
+   #:get-clipboard-text
+   #:set-clipboard-text
+   #:clear-clipboard
+
    #:wndclass-name
    #:wndclass-instance
    #:wndclass-atom
