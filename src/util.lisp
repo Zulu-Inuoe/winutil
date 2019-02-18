@@ -1,19 +1,23 @@
 (in-package #:winutil)
 
-(defun lisp-to-tstring (string tchar-buf tchar-count)
+(defun lisp-to-tstring (string tchar-buf tchar-count &key (start 0) end (offset 0))
   "Convert from a lisp string to a `win32:lptstr' and write it into `tchar-buf'"
   (cffi:lisp-string-to-foreign
    string
    tchar-buf
    (* tchar-count (cffi:foreign-type-size 'win32:tchar))
+   :start start
+   :end end
+   :offset (* offset (cffi:foreign-type-size 'win32:tchar))
    :encoding win32:+win32-string-encoding+))
 
-(defun tstring-to-lisp (tchar-buf tchar-count)
+(defun tstring-to-lisp (tchar-buf &key (offset 0) count)
   "Convert from a foreign `win32:lptstr' to a lisp string"
   (values
    (cffi:foreign-string-to-lisp
     tchar-buf
-    :count (* tchar-count (cffi:foreign-type-size 'win32:tchar))
+    :offset (* offset (cffi:foreign-type-size 'win32:tchar))
+    :count (and count (* count (cffi:foreign-type-size 'win32:tchar)))
     :encoding win32:+win32-string-encoding+)))
 
 (defun error-code-string (code)
@@ -21,7 +25,7 @@
 Returns two values:
 1. On success, the error string, or `nil' if there was an error retrieving it
 2. On success, `nil'. Otherwise an error code indicating the operation failed."
-  (cffi:with-foreign-object (result 'win32:lptstr)
+  (cffi:with-foreign-object (result '(:pointer win32:lptstr))
     (let ((tchar-count
             (win32:format-message (logior win32:+format-message-allocate-buffer+
                                           win32:+format-message-ignore-inserts+
@@ -39,6 +43,7 @@ Returns two values:
               (let ((tstr (cffi:mem-ref result '(:pointer (:pointer win32:tchar)))))
                 (tstring-to-lisp tstr
                                  ;; Don't include the CRLF Windows puts at the end..
+                                 :count
                                  (if (and (> tchar-count 1)
                                           (= (cffi:mem-aref tstr 'win32:tchar (- tchar-count 1))
                                              (char-code #\LineFeed))
@@ -91,7 +96,7 @@ Meant as a fallback."
              ((zerop res)
               (win32-error last-error))
              (t
-              (return (tstring-to-lisp buf res)))))
+              (return (tstring-to-lisp buf :count res)))))
       (unless (cffi:null-pointer-p buf)
         (cffi:foreign-free buf)))))
 
@@ -106,7 +111,7 @@ Meant as a fallback."
         ((zerop res)
          (win32-error last-error))
         ((/= res buffer-size)
-         (return-from %module-path-string (tstring-to-lisp buffer res))))))
+         (return-from %module-path-string (tstring-to-lisp buffer :count res))))))
   ;;Fallback on dynamic alloc
   (%module-path-string-dyn module (* 2 buffer-size)))
 
@@ -125,7 +130,13 @@ Note: This is not the current working directory."
     (win32:get-system-info system-info)
     (cffi:foreign-slot-value system-info 'win32:system-info 'win32:number-of-processors)))
 
-(defun %zero-memory (ptr type)
-  (dotimes (i (cffi:foreign-type-size type))
-    (setf (cffi:mem-ref ptr :uint8 i) 0)))
+(defun %memcpy (dst src size)
+  (dotimes (i size)
+    (setf (cffi:mem-aref dst :uint8 i) (cffi:mem-aref src :uint8 i))))
 
+(defun %memset (buf value size)
+  (dotimes (i size)
+    (setf (cffi:mem-aref buf :uint8 i) value)))
+
+(defun %zero-memory (ptr type)
+  (%memset ptr 0 (cffi:foreign-type-size type)))

@@ -118,7 +118,7 @@
                (last-error (win32:get-last-error)))
            (when (zerop len)
              (win32-error last-error))
-           (tstring-to-lisp buf res)))))))
+           (tstring-to-lisp buf :count res)))))))
 
 (declaim (type (function (cffi:foreign-pointer (signed-byte #.(* (cffi:foreign-type-size :pointer) 8))) (values boolean &rest t))
                %*map-windows-fn*))
