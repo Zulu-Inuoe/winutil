@@ -38,6 +38,7 @@
    #:hwnd-height
    #:hwnd-dimensions
    #:hwnd-dimensions*
+   #:hwnd-text
 
    #:hwnd-wrapper
    #:hwnd-wrapper-hwnd

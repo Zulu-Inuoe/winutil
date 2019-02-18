@@ -108,6 +108,18 @@
    (car value) (cdr value)
    (logior win32:+swp-nomove+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+)))
 
+(defun hwnd-text (hwnd &aux (hwnd hwnd))
+  (let ((len (win32:get-window-text-length hwnd)))
+    (cond
+      ((zerop len) "")
+      (t
+       (cffi:with-foreign-object (buf 'win32:tchar (1+ len))
+         (let ((res (win32:get-window-text hwnd buf (1+ len)))
+               (last-error (win32:get-last-error)))
+           (when (zerop len)
+             (win32-error last-error))
+           (tstring-to-lisp buf res)))))))
+
 (declaim (type (function (cffi:foreign-pointer (signed-byte #.(* (cffi:foreign-type-size :pointer) 8))) (values boolean &rest t))
                %*map-windows-fn*))
 (defvar %*map-windows-fn*)
