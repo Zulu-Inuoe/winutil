@@ -11,4 +11,4 @@
                  (lisp-implementation-version)
                  (%make-guid))
    :x 0 :y 0 :width 0 :height 0
-   :parent (cffi:make-pointer win32:+hwnd-message+)))
+   :parent win32:+hwnd-message+))
