@@ -24,6 +24,11 @@
    #:defwndproc
    #:message-pump
 
+   #:open-reg-key
+   #:close-reg-key
+   #:get-reg-string
+   #:get-reg-number
+
    #:get-clipboard-text
    #:set-clipboard-text
    #:clear-clipboard
