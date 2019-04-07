@@ -40,7 +40,7 @@ Returns two values:
       (values
        (unless (zerop tchar-count)
          (unwind-protect
-              (let ((tstr (cffi:mem-ref result '(:pointer (:pointer win32:tchar)))))
+              (let ((tstr (cffi:mem-ref result '(:pointer win32:tchar))))
                 (tstring-to-lisp tstr
                                  ;; Don't include the CRLF Windows puts at the end..
                                  :count
@@ -51,7 +51,7 @@ Returns two values:
                                              (char-code #\Return)))
                                      (- tchar-count 2)
                                      tchar-count)))
-           (win32:local-free result)))
+           (win32:local-free (cffi:mem-ref result '(:pointer win32:tchar)))))
        (when (zerop tchar-count)
          last-error)))))
 
