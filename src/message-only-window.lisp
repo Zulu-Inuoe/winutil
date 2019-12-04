@@ -1,6 +1,6 @@
 (in-package #:winutil)
 
-(defclass message-only-hwnd (window)
+(defclass message-only-window (window)
   ()
   (:default-initargs
    :cursor (cffi:null-pointer)

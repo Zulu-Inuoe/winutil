@@ -69,4 +69,6 @@
    #:window-wndclass-name
    #:window-instance
    #:window-hwnd
-   #:call-wndproc))
+   #:call-wndproc
+
+   #:message-only-window))
