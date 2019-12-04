@@ -99,7 +99,7 @@
     (win32:get-window-rect (hwnd hwnd) r)
     (cons
      (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
-       (cffi:foreign-slot-value r 'win32:rect 'win32:left))
+        (cffi:foreign-slot-value r 'win32:rect 'win32:left))
      (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
         (cffi:foreign-slot-value r 'win32:rect 'win32:top)))))
 
