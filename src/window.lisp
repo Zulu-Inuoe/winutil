@@ -25,35 +25,45 @@
 
 (defvar %*windows* (make-hash-table))
 
-(defgeneric window-wndproc (window msg wparam lparam)
+(defgeneric call-wndproc (window msg wparam lparam)
+  (:method (window msg wparam lparam)
+    "Try getting the hwnd of `window' and calling its wndproc."
+    (let ((hwnd (hwnd window)))
+      (cffi:foreign-funcall-pointer (cffi:make-pointer (win32:get-window-long-ptr hwnd win32:+gwl-wndproc+))
+                                    (:convention :stdcall)
+                                    win32:hwnd hwnd
+                                    win32:uint msg
+                                    win32:wparam wparam
+                                    win32:lparam lparam)))
   (:method ((window window) msg wparam lparam)
+    "Pass to def-window-proc"
     (win32:def-window-proc (window-hwnd window) msg wparam lparam))
   (:documentation
-   "A win32 wndproc."))
+   "Invokes the wndproc of `window' with the given arguments."))
 
 (defvar %*creating-window*)
 
 (defwndproc %window-wndproc (hwnd msg wparam lparam)
   "wndproc used for `window' subclasses.
-Ensures correct context and dispatches to `window-wndproc'"
+Ensures correct context and dispatches to `call-wndproc'"
   (case msg
     (#.win32:+wm-getminmaxinfo+
      (cond
        ((boundp '%*creating-window*)
         (setf (slot-value %*creating-window* '%hwnd) hwnd
               (gethash (cffi:pointer-address hwnd) %*windows*) %*creating-window*)
-        (window-wndproc %*creating-window* msg wparam lparam))
+        (call-wndproc %*creating-window* msg wparam lparam))
        (t
-        (window-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
+        (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
     (#.win32:+wm-ncdestroy+
      (let ((window (gethash (cffi:pointer-address hwnd) %*windows*)))
        (unwind-protect
-            (window-wndproc window msg wparam lparam)
+            (call-wndproc window msg wparam lparam)
          (remhash (cffi:pointer-address hwnd) %*windows*)
          (slot-makunbound window '%hwnd)
          (dispose window))))
     (t
-     (window-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
+     (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
 
 (defmethod initialize-instance :after ((obj window)
                                        &key

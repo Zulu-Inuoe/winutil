@@ -69,4 +69,4 @@
    #:window-wndclass-name
    #:window-instance
    #:window-hwnd
-   #:window-wndproc))
+   #:call-wndproc))
