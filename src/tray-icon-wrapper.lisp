@@ -45,19 +45,20 @@ Used in order to obtain a unique ID for each.")
                                        &allow-other-keys)
   (with-slots (%hwnd %id) obj
     (setf %hwnd (hwnd hwnd))
-    (let ((existing-icons (gethash (cffi:pointer-address %hwnd) %*hwnd-icons*)))
+    (let* ((key (cffi:pointer-address %hwnd))
+           (existing-icons (gethash key %*hwnd-icons*)))
       (setf %id (if existing-icons (1+ (car existing-icons)) 0)
-            (gethash (cffi:pointer-address %hwnd) %*hwnd-icons*)
-            (cons %id existing-icons))))
+            (gethash key %*hwnd-icons*) (cons %id existing-icons))))
   (%notify-icon win32:+nim-add+ obj))
 
 (define-dispose (obj tray-icon-wrapper)
   (%notify-icon win32:+nim-delete+ obj)
   (with-slots (%hwnd %id) obj
-    (let ((existing-icons (delete %id (gethash (cffi:pointer-address %hwnd) %*hwnd-icons*))))
+    (let* ((key (cffi:pointer-address %hwnd))
+           (existing-icons (delete %id (gethash key %*hwnd-icons*))))
       (if existing-icons
-          (setf (gethash (cffi:pointer-address %hwnd) %*hwnd-icons*) existing-icons)
-          (remhash (cffi:pointer-address %hwnd) %*hwnd-icons*))))
+          (setf (gethash key %*hwnd-icons*) existing-icons)
+          (remhash key %*hwnd-icons*))))
   (slot-makunbound obj '%id))
 
 (defmethod (setf tray-icon-wrapper-tooltip) (value (obj tray-icon-wrapper))
