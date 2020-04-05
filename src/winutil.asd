@@ -6,6 +6,7 @@
   :components
   ((:file "package")
    (:file "util" :depends-on ("package"))
+   (:file "error" :depends-on ("package" "util"))
    (:file "ui-util" :depends-on ("package"))
    (:file "registry" :depends-on ("package" "util"))
    (:file "clipboard" :depends-on ("package" "util"))
