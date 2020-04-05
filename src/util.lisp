@@ -56,7 +56,7 @@ Returns two values:
 
 (define-condition win32-error ()
   ((%code
-    :type integer
+    :type (unsigned-byte 32)
     :initarg :code
     :initform (required-argument :code)
     :reader win32-error-code)
@@ -70,7 +70,9 @@ Returns two values:
 
 (defun win32-error (&optional (code (win32:get-last-error)))
   "Signals an error of type `win32-error' using `code' as the error code"
-  (error 'win32-error :code code :string (error-code-string code)))
+  (check-type code (or (unsigned-byte 32) (signed-byte 32)))
+  (let ((unsigned-code (ldb (byte 32 0) code)))
+    (error 'win32-error :code unsigned-code :string (error-code-string code))))
 
 (defun %module-path-string-dyn (&optional
                                   (module (cffi:null-pointer))
