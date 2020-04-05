@@ -11,6 +11,21 @@
             (ldb (byte 16 48) value)
             (ldb (byte 48 0) value))))
 
+(defun clip-cursor (left top right bottom)
+  (cffi:with-foreign-object (r 'win32:rect)
+    (setf (cffi:foreign-slot-value r 'win32:rect 'win32:left) left
+          (cffi:foreign-slot-value r 'win32:rect 'win32:top) top
+          (cffi:foreign-slot-value r 'win32:rect 'win32:right) right
+          (cffi:foreign-slot-value r 'win32:rect 'win32:bottom) bottom)
+    (unless (win32:clip-cursor r)
+      (win32-error)))
+  (values))
+
+(defun unclip-cursor ()
+  (unless (win32:clip-cursor (cffi:null-pointer))
+    (win32-error))
+  (values))
+
 (defun cursor-position ()
   (cffi:with-foreign-object (pt 'win32:point)
     (win32:get-cursor-pos pt)

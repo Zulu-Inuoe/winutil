@@ -19,6 +19,8 @@
    #:exe-dir-pathname
    #:processor-count
 
+   #:clip-cursor
+   #:unclip-cursor
    #:cursor-position
    #:cursor-position*
    #:set-cursor-position
