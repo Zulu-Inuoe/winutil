@@ -18,12 +18,22 @@
      (cffi:foreign-slot-value pt 'win32:point 'win32:x)
      (cffi:foreign-slot-value pt 'win32:point 'win32:y))))
 
+(defun set-cursor-position (x y)
+  (unless (win32:set-cursor-pos x y)
+    (win32-error))
+  (values))
+
 (defun cursor-position* ()
   (cffi:with-foreign-object (pt 'win32:point)
     (win32:get-cursor-pos pt)
     (cons
      (cffi:foreign-slot-value pt 'win32:point 'win32:x)
      (cffi:foreign-slot-value pt 'win32:point 'win32:y))))
+
+(defun (setf cursor-position*) (value)
+  (unless (win32:set-cursor-pos (car value) (cdr value))
+    (win32-error))
+  value)
 
 (defmacro defwndproc (name (hwnd msg wparam lparam) &body body)
   "Utility Wrapper around `cffi:defcallback' for defining wndproc callbacks.

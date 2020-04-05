@@ -21,6 +21,8 @@
 
    #:cursor-position
    #:cursor-position*
+   #:set-cursor-position
+
    #:list-windows
    #:list-child-windows
    #:defwndproc
