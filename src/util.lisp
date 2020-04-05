@@ -25,7 +25,7 @@
 Returns two values:
 1. On success, the error string, or `nil' if there was an error retrieving it
 2. On success, `nil'. Otherwise an error code indicating the operation failed."
-  (cffi:with-foreign-object (result '(:pointer win32:lptstr))
+  (cffi:with-foreign-object (result '(:pointer win32:tchar))
     (let ((tchar-count
             (win32:format-message (logior win32:+format-message-allocate-buffer+
                                           win32:+format-message-ignore-inserts+
@@ -41,16 +41,15 @@ Returns two values:
        (unless (zerop tchar-count)
          (unwind-protect
               (let ((tstr (cffi:mem-ref result '(:pointer win32:tchar))))
-                (tstring-to-lisp tstr
-                                 ;; Don't include the CRLF Windows puts at the end..
-                                 :count
-                                 (if (and (> tchar-count 1)
-                                          (= (cffi:mem-aref tstr 'win32:tchar (- tchar-count 1))
-                                             (char-code #\LineFeed))
-                                          (= (cffi:mem-aref tstr 'win32:tchar (- tchar-count 2))
-                                             (char-code #\Return)))
-                                     (- tchar-count 2)
-                                     tchar-count)))
+                ;; Cut LF
+                (when (and (> tchar-count 0)
+                           (= (cffi:mem-aref tstr 'win32:tchar (1- tchar-count)) 10))
+                  (decf tchar-count)
+                  ;; Cut CR
+                  (when (and (> tchar-count 0)
+                             (= (cffi:mem-aref tstr 'win32:tchar (1- tchar-count)) 13))
+                    (decf tchar-count)))
+                (tstring-to-lisp tstr :count tchar-count))
            (win32:local-free (cffi:mem-ref result '(:pointer win32:tchar)))))
        (when (zerop tchar-count)
          last-error)))))
