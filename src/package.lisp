@@ -13,6 +13,8 @@
    #:win32-error-code
    #:win32-error-string
 
+   #:check-win32-error
+
    #:exe-pathname
    #:exe-dir-pathname
    #:processor-count
