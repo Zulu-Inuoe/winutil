@@ -65,6 +65,33 @@ Ensures correct context and dispatches to `call-wndproc'"
     (t
      (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
 
+(defun %register-window-class (class-style cls-extra wnd-extra instance icon cursor background menu-name wndclass-name icon-sm)
+  (let ((class-atom (cffi:with-foreign-object (class 'win32:wndclassex)
+                      (%zero-memory class 'win32:wndclassex)
+                      (cffi:with-foreign-slots ((win32:size win32:style win32:wndproc
+                                                            win32:cls-extra win32:wnd-extra
+                                                            win32:instance
+                                                            win32:icon win32:cursor
+                                                            win32:background win32:menu-name
+                                                            win32:wndclass-name win32:icon-sm)
+                                                class win32:wndclassex)
+                        (setf win32:size (cffi:foreign-type-size 'win32:wndclassex)
+                              win32:style class-style
+                              win32:wndproc (cffi:callback %window-wndproc)
+                              win32:cls-extra cls-extra
+                              win32:wnd-extra wnd-extra
+                              win32:instance instance
+                              win32:icon icon
+                              win32:cursor cursor
+                              win32:background background
+                              win32:menu-name menu-name
+                              win32:wndclass-name wndclass-name
+                              win32:icon-sm icon-sm))
+                      (win32:register-class-ex class))))
+    (when (zerop class-atom)
+      (win32-error))
+    (cffi:make-pointer class-atom)))
+
 (defmethod initialize-instance :after ((obj window)
                                        &key
                                          (class-style 0)
@@ -85,49 +112,29 @@ Ensures correct context and dispatches to `call-wndproc'"
                                          (parent (cffi:null-pointer))
                                          (menu (cffi:null-pointer))
                                          (lparam (cffi:null-pointer))
-                                       &allow-other-keys)
-  (let* ((class-atom
-           (cffi:make-pointer
-            (cffi:with-foreign-object (class 'win32:wndclassex)
-              (%zero-memory class 'win32:wndclassex)
-              (cffi:with-foreign-slots ((win32:size win32:style win32:wndproc
-                                                    win32:cls-extra win32:wnd-extra
-                                                    win32:instance
-                                                    win32:icon win32:cursor
-                                                    win32:background win32:menu-name
-                                                    win32:wndclass-name win32:icon-sm)
-                                        class win32:wndclassex)
-                (setf win32:size (cffi:foreign-type-size 'win32:wndclassex)
-                      win32:style class-style
-                      win32:wndproc (cffi:callback %window-wndproc)
-                      win32:cls-extra cls-extra
-                      win32:wnd-extra wnd-extra
-                      win32:instance (window-instance obj)
-                      win32:icon icon
-                      win32:cursor cursor
-                      win32:background background
-                      win32:menu-name menu-name
-                      win32:wndclass-name (window-wndclass-name obj)
-                      win32:icon-sm icon-sm))
-              (win32:register-class-ex class))))
-        (success nil))
+                                       &allow-other-keys
+                                       &aux
+                                         (instance (window-instance obj))
+                                         (class-atom (%register-window-class
+                                                      class-style cls-extra wnd-extra instance
+                                                      icon cursor background menu-name
+                                                      (wndclass-name obj)
+                                                      icon-sm)))
+  (let ((success nil))
     (unwind-protect
          (let ((%*creating-window* obj))
            (setf (slot-value obj '%class-atom) class-atom)
-           (win32:create-window-ex ex-style class-atom name style x y width height
-                                   parent
-                                   menu
-                                   (window-instance obj)
-                                   lparam)
+           (check-win32-not-null (win32:create-window-ex ex-style class-atom name style
+                                                         x y width height
+                                                         parent menu instance lparam))
            (setf success t))
       (unless success
-        (slot-makunbound obj '%class-atom)
-        (win32:unregister-class class-atom (window-instance obj))))))
+        (win32:unregister-class (window-class-atom obj) (window-instance obj))
+        (slot-makunbound obj '%class-atom)))))
 
 (define-dispose (obj window)
-  (unwind-protect
-       (when (slot-boundp obj '%hwnd)
-         (win32:destroy-window (window-hwnd obj)))
+  (unwind-protect (when (slot-boundp obj '%hwnd)
+                    (win32:destroy-window (window-hwnd obj)))
     (win32:unregister-class (window-class-atom obj) (window-instance obj))
     (slot-makunbound obj '%class-atom)))
 
