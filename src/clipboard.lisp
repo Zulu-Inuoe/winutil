@@ -4,19 +4,20 @@
   `(progn
      (unless (win32:open-clipboard ,owner)
        (win32-error))
-     (unwind-protect
-          (progn ,@body)
-       (win32:close-clipboard))))
+     (unwind-protect (progn ,@body)
+       (unless (win32:close-clipboard)
+         (win32-error)))))
 
 (defun get-clipboard-text (&optional (owner (cffi:null-pointer)))
   (with-open-clipboard ((hwnd owner))
     (let ((data (win32:get-clipboard-data win32:+cf-unicodetext+)))
       (when (cffi:null-pointer-p data)
         (return-from get-clipboard-text ""))
-      (win32:global-lock data)
-      (unwind-protect
-           (tstring-to-lisp data)
-        (win32:global-unlock data)))))
+      (when (cffi:pointer-eq (win32:global-lock data) (cffi:null-pointer))
+        (win32-error))
+      (unwind-protect (tstring-to-lisp data)
+        (win32:global-unlock data)
+        (check-win32-error)))))
 
 (defun set-clipboard-text (string &key (owner (cffi:null-pointer)) (start 0) end)
   (cffi:with-foreign-string ((str size) string :encoding win32:+win32-string-encoding+ :start start :end end)
@@ -37,5 +38,6 @@
 
 (defun clear-clipboard (&optional (owner (cffi:null-pointer)))
   (with-open-clipboard ((hwnd owner))
-    (win32:empty-clipboard))
+    (unless (win32:empty-clipboard)
+      (win32-error)))
   (values))
