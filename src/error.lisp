@@ -58,3 +58,8 @@ Returns two values:
   "Signals an error if `code' indicates a failure result (severity bit set)"
   (when (logbitp 31 code)
     (win32-error code)))
+
+(defun check-win32-not-null (value &optional (code (win32:get-last-error)))
+  "Signals an error of type `win32-error' using `code' as the error code if `value' is `cffi:null-pointer-p'"
+  (when (cffi:null-pointer-p value)
+    (win32-error code)))
