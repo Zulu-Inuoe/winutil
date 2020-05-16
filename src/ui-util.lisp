@@ -38,6 +38,15 @@
     (win32-error))
   (values))
 
+(define-setf-expander cursor-position ()
+  (let ((x-var (gensym "X"))
+        (y-var (gensym "Y")))
+    (values ()
+            ()
+            `(,x-var ,y-var)
+            `(set-cursor-position (or ,x-var 0) (or ,y-var 0))
+            `(cursor-position))))
+
 (defun cursor-position* ()
   (cffi:with-foreign-object (pt 'win32:point)
     (win32:get-cursor-pos pt)
