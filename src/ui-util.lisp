@@ -17,25 +17,26 @@
           (cffi:foreign-slot-value r 'win32:rect 'win32:top) top
           (cffi:foreign-slot-value r 'win32:rect 'win32:right) right
           (cffi:foreign-slot-value r 'win32:rect 'win32:bottom) bottom)
-    (unless (win32:clip-cursor r)
-      (win32-error)))
+    (or (win32:clip-cursor r)
+        (win32-error)))
   (values))
 
 (defun unclip-cursor ()
-  (unless (win32:clip-cursor (cffi:null-pointer))
-    (win32-error))
+  (or (win32:clip-cursor (cffi:null-pointer))
+      (win32-error))
   (values))
 
 (defun cursor-position ()
   (cffi:with-foreign-object (pt 'win32:point)
-    (win32:get-cursor-pos pt)
+    (or (win32:get-cursor-pos pt)
+        (win32-error))
     (values
      (cffi:foreign-slot-value pt 'win32:point 'win32:x)
      (cffi:foreign-slot-value pt 'win32:point 'win32:y))))
 
 (defun set-cursor-position (x y)
-  (unless (win32:set-cursor-pos x y)
-    (win32-error))
+  (or (win32:set-cursor-pos x y)
+      (win32-error))
   (values))
 
 (define-setf-expander cursor-position ()
@@ -49,14 +50,15 @@
 
 (defun cursor-position* ()
   (cffi:with-foreign-object (pt 'win32:point)
-    (win32:get-cursor-pos pt)
+    (or (win32:get-cursor-pos pt)
+        (win32-error))
     (cons
      (cffi:foreign-slot-value pt 'win32:point 'win32:x)
      (cffi:foreign-slot-value pt 'win32:point 'win32:y))))
 
 (defun (setf cursor-position*) (value)
-  (unless (win32:set-cursor-pos (car value) (cdr value))
-    (win32-error))
+  (or (win32:set-cursor-pos (car value) (cdr value))
+      (win32-error))
   value)
 
 (defmacro defwndproc (name (hwnd msg wparam lparam) &body body)
