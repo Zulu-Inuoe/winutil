@@ -102,6 +102,12 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
   "Run a typical win32 message pump until quit."
   (cffi:with-foreign-object (msg 'win32:msg)
     (loop
-      :while (win32:get-message msg (cffi:null-pointer) 0 0)
-      :do (win32:translate-message msg)
-          (win32:dispatch-message msg))))
+      :for res := (win32:get-message msg (cffi:null-pointer) 0 0)
+      :until (zerop res)
+      :do
+         (cond
+           ((= res -1)
+            (win32-error))
+           (t
+            (win32:translate-message msg)
+            (win32:dispatch-message msg))))))
