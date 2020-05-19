@@ -66,9 +66,6 @@
    #:hmenu-wrapper-hmenu
 
    #:window
-   #:window-wndclass-name
-   #:window-instance
-   #:window-hwnd
    #:call-wndproc
 
    #:message-only-window

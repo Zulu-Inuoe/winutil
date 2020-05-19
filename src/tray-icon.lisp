@@ -67,7 +67,7 @@
                                             win32:callback-message win32:icon win32:tip)
                                 nid win32:notify-icon-data)
         (setf win32:size (cffi:foreign-type-size 'win32:notify-icon-data)
-              win32:hwnd (window-hwnd %*tray-icon-window*)
+              win32:hwnd (hwnd %*tray-icon-window*)
               win32:id (slot-value tray-icon '%id)
               win32:flags (logior (if tooltip win32:+nif-tip+ 0)
                                   win32:+nif-icon+ win32:+nif-message+)
@@ -100,7 +100,7 @@
   (slot-makunbound tray-icon '%id))
 
 (defmethod hwnd ((tray-icon tray-icon))
-  (window-hwnd %*tray-icon-window*))
+  (hwnd %*tray-icon-window*))
 
 (defgeneric (setf tray-icon-tooltip) (value tray-icon)
   (:method (value (tray-icon tray-icon))

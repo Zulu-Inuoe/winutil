@@ -5,6 +5,10 @@
     :type cffi:foreign-pointer
     :reader hwnd-wrapper-hwnd)))
 
+(defvar %*creating-hwnd-wrapper* nil
+  "The `hwnd-wrapper' currently being created via `win32:create-window-ex'")
+(makunbound '%*creating-hwnd-wrapper*)
+
 (defmethod initialize-instance :after ((obj hwnd-wrapper)
                                        &key
                                          (wndclass (required-argument :wndclass))
@@ -20,10 +24,11 @@
                                          (instance (wndclass-instance wndclass))
                                          (lparam (cffi:null-pointer))
                                        &allow-other-keys)
-  (let ((hwnd (win32:create-window-ex
-               ex-style (wndclass-atom wndclass) name style
-               x y width height
-               (hwnd parent) menu instance lparam)))
+  (let ((hwnd (let ((%*creating-hwnd-wrapper* obj))
+                (win32:create-window-ex
+                 ex-style (wndclass-atom wndclass) name style
+                 x y width height
+                 (hwnd parent) menu instance lparam))))
     (check-win32-not-null hwnd)
     (setf (slot-value obj '%hwnd) hwnd)))
 
