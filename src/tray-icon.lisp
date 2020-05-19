@@ -107,4 +107,3 @@
     (with-slots (%id %tooltip) tray-icon
       (prog1 (setf %tooltip value)
         (%tray-icon-notify tray-icon win32:+nim-modify+)))))
-
