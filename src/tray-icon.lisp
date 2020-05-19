@@ -53,7 +53,7 @@
        (loop
          :for (id . icon) :in %existing-icons
          :do (with-slots (%id %tooltip) icon
-               (%notify-icon win32:+nim-add+ %id %+tray-icon-message+ %tooltip)))
+               (%tray-icon-notify win32:+nim-add+ %id %+tray-icon-message+ %tooltip)))
        0)
       (t
        (call-next-method)))))
