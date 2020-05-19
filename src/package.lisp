@@ -65,16 +65,13 @@
    #:hmenu-wrapper
    #:hmenu-wrapper-hmenu
 
-   #:tray-icon-wrapper
-   #:tray-icon-wrapper-hwnd
-   #:tray-icon-wrapper-message-id
-   #:tray-icon-wrapper-id
-   #:tray-icon-wrapper-tooltip
-
    #:window
    #:window-wndclass-name
    #:window-instance
    #:window-hwnd
    #:call-wndproc
 
-   #:message-only-window))
+   #:message-only-window
+
+   #:tray-icon
+   #:tray-icon-tooltip))
