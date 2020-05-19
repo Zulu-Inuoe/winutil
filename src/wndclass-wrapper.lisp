@@ -52,7 +52,9 @@
             win32:menu-name menu-name
             win32:wndclass-name (wndclass-wrapper-name obj)
             win32:icon-sm icon-sm))
-    (setf (slot-value obj '%class-atom) (cffi:make-pointer (win32:register-class-ex class)))))
+    (let ((class-atom (win32:register-class-ex class)))
+      (or (/= class-atom 0) (win32-error))
+      (setf (slot-value obj '%class-atom) (cffi:make-pointer class-atom)))))
 
 (define-dispose (obj wndclass-wrapper)
   (win32:unregister-class (wndclass-wrapper-atom obj) (wndclass-wrapper-instance obj))
