@@ -3,10 +3,6 @@
 (defclass window (disposable)
   ((%wndclass-name
     :type string
-    :initform (format nil "Window[~A(~A);~A]"
-                      (lisp-implementation-type)
-                      (lisp-implementation-version)
-                      (%make-guid))
     :initarg :wndclass-name
     :reader window-wndclass-name)
    (%instance
@@ -20,6 +16,11 @@
    (%hwnd
     :type cffi:foreign-pointer
     :reader window-hwnd))
+  (:default-initargs
+   :wndclass-name (format nil "Window[~A(~A);~A]"
+                          (lisp-implementation-type)
+                          (lisp-implementation-version)
+                          (%make-guid)))
   (:documentation
    "Higher level interface to an `hwnd' allowing for generic function dispatch of wndproc"))
 

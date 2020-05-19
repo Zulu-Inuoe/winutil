@@ -3,20 +3,21 @@
 (defclass wndclass-wrapper (disposable)
   ((%name
     :type string
-    :initform (format nil "Wndclass-Wrapper[~A(~A);~A]"
-                      (lisp-implementation-type)
-                      (lisp-implementation-version)
-                      (%make-guid))
     :initarg :name
     :reader wndclass-wrapper-name)
    (%instance
     :type cffi:foreign-pointer
     :initarg :instance
-    :initform (win32:get-module-handle (cffi:null-pointer))
     :reader wndclass-wrapper-instance)
    (%class-atom
     :type cffi:foreign-pointer
-    :reader wndclass-wrapper-atom)))
+    :reader wndclass-wrapper-atom))
+  (:default-initargs
+   :name (format nil "Wndclass-Wrapper[~A(~A);~A]"
+                 (lisp-implementation-type)
+                 (lisp-implementation-version)
+                 (%make-guid))
+   :instance (win32:get-module-handle (cffi:null-pointer))))
 
 (defmethod initialize-instance :after ((obj wndclass-wrapper)
                                        &key
