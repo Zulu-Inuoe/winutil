@@ -71,4 +71,6 @@
    #:message-only-window
 
    #:tray-icon
-   #:tray-icon-tooltip))
+   #:tray-icon-tooltip
+
+   #:tray-event))
