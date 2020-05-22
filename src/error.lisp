@@ -34,7 +34,7 @@ Returns two values:
        (when (zerop tchar-count)
          last-error)))))
 
-(define-condition win32-error ()
+(define-condition win32-error (error)
   ((%code
     :type (unsigned-byte 32)
     :initarg :code
