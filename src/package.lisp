@@ -14,6 +14,7 @@
    #:win32-error-string
 
    #:check-win32-error
+   #:check-win32-not-null
 
    #:exe-pathname
    #:exe-dir-pathname
