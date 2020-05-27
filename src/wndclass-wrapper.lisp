@@ -46,12 +46,12 @@
             win32:cls-extra cls-extra
             win32:wnd-extra wnd-extra
             win32:instance (wndclass-wrapper-instance obj)
-            win32:icon icon
-            win32:cursor cursor
+            win32:icon (hicon icon)
+            win32:cursor (hcursor cursor)
             win32:background background
             win32:menu-name menu-name
             win32:wndclass-name (wndclass-wrapper-name obj)
-            win32:icon-sm icon-sm))
+            win32:icon-sm (hicon icon-sm)))
     (let ((class-atom (win32:register-class-ex class)))
       (or (/= class-atom 0) (win32-error))
       (setf (slot-value obj '%class-atom) (cffi:make-pointer class-atom)))))

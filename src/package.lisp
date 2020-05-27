@@ -31,6 +31,9 @@
    #:defwndproc
    #:message-pump
 
+   #:hicon
+   #:hcursor
+
    #:open-reg-key
    #:close-reg-key
    #:get-reg-string
