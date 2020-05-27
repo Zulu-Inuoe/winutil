@@ -10,6 +10,7 @@
    (:file "ui-util" :depends-on ("package"))
    (:file "hicon" :depends-on ("package"))
    (:file "hcursor" :depends-on ("package"))
+   (:file "resources" :depends-on ("package" "hicon" "hcursor"))
    (:file "registry" :depends-on ("package" "util"))
    (:file "clipboard" :depends-on ("package" "util"))
    (:file "wndclass" :depends-on ("package"))

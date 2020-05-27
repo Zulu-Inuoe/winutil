@@ -34,6 +34,12 @@
    #:hicon
    #:hcursor
 
+   #:icon-resource
+   #:make-icon-resource
+
+   #:cursor-resource
+   #:make-cursor-resource
+
    #:open-reg-key
    #:close-reg-key
    #:get-reg-string
