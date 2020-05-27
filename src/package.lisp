@@ -13,8 +13,8 @@
    #:win32-error-code
    #:win32-error-string
 
-   #:check-win32-error
-   #:check-win32-not-null
+   #:check-last-error
+   #:not-null-or-error
 
    #:exe-pathname
    #:exe-dir-pathname

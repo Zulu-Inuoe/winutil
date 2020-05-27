@@ -24,13 +24,13 @@
                                          (instance (wndclass-instance wndclass))
                                          (lparam (cffi:null-pointer))
                                        &allow-other-keys)
-  (let ((hwnd (let ((%*creating-hwnd-wrapper* obj))
-                (win32:create-window-ex
-                 ex-style (wndclass-atom wndclass) name style
-                 x y width height
-                 (hwnd parent) menu instance lparam))))
-    (check-win32-not-null hwnd)
-    (setf (slot-value obj '%hwnd) hwnd)))
+  (setf (slot-value obj '%hwnd)
+        (not-null-or-error
+         (let ((%*creating-hwnd-wrapper* obj))
+           (win32:create-window-ex
+            ex-style (wndclass-atom wndclass) name style
+            x y width height
+            (hwnd parent) menu instance lparam)))))
 
 (define-dispose (obj hwnd-wrapper)
   (or (win32:destroy-window (hwnd-wrapper-hwnd obj))

@@ -54,14 +54,13 @@ Returns two values:
   (let ((unsigned-code (ldb (byte 32 0) code)))
     (error 'win32-error :code unsigned-code :string (error-code-string code))))
 
-(defun check-win32-error (&optional (code (win32:get-last-error)))
+(defun check-last-error (&optional (code (win32:get-last-error)))
   "Signals an error if `code' indicates a failure result (severity bit set)
  Otherwise returns `code'"
-  (if (logbitp 31 code)
-      (win32-error code)
-      code))
+  (when (logbitp 31 code)
+    (win32-error code)))
 
-(defun check-win32-not-null (value &optional (code (win32:get-last-error)))
+(defun not-null-or-error (value &optional (code (win32:get-last-error)))
   "Signals an error of type `win32-error' using `code' as the error code if `value' is `cffi:null-pointer-p'
  Otherwise returns `value'"
   (if (cffi:null-pointer-p value)
