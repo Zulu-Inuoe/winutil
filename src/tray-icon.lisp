@@ -21,8 +21,8 @@
 
 (pushnew '(%*tray-icon-window* . nil) bt:*default-special-bindings* :test #'equal)
 
-#+slynk
-(pushnew '(%*tray-icon-window* . nil) slynk:*default-worker-thread-bindings* :test #'equal)
+(when (find-package #1='#:slynk)
+  (pushnew '(%*tray-icon-window* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
 
 (defclass tray-icon (disposable)
   ((%id
