@@ -76,5 +76,6 @@
 
    #:tray-icon
    #:tray-icon-tooltip
+   #:tray-icon-icon
 
    #:tray-event))

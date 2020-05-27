@@ -30,9 +30,14 @@
    (%tooltip
     :type (or null string)
     :initarg :tooltip
-    :reader tray-icon-tooltip))
+    :reader tray-icon-tooltip)
+   (%icon
+    :type t
+    :initarg :icon
+    :reader tray-icon-icon))
   (:default-initargs
-   :tooltip nil))
+   :tooltip nil
+   :icon nil))
 
 (defgeneric tray-event (icon lparam)
   (:documentation "Event called on `tray-icon' when a tray event occurs.")
@@ -60,7 +65,10 @@
 
 (defun %tray-icon-notify (tray-icon message)
   "Wrapper around `win32:shell-notify-icon' which notifies `message' using data from `tray-icon'"
-  (let ((tooltip (tray-icon-tooltip tray-icon)))
+  (let ((tooltip (tray-icon-tooltip tray-icon))
+        (icon (hicon
+               (or (tray-icon-icon tray-icon)
+                   (win32:load-icon (cffi:null-pointer) win32:+idi-application+)))))
     (cffi:with-foreign-object (nid 'win32:notify-icon-data)
       (%zero-memory nid 'win32:notify-icon-data)
       (cffi:with-foreign-slots ((win32:size win32:hwnd win32:id win32:flags
@@ -72,7 +80,7 @@
               win32:flags (logior (if tooltip win32:+nif-tip+ 0)
                                   win32:+nif-icon+ win32:+nif-message+)
               win32:callback-message %+tray-icon-message+
-              win32:icon (win32:load-icon (cffi:null-pointer) win32:+idi-application+))
+              win32:icon icon)
         (when tooltip
           (lisp-to-tstring tooltip win32:tip 128))
         (or (win32:shell-notify-icon message nid)
@@ -106,4 +114,10 @@
   (:method (value (tray-icon tray-icon))
     (with-slots (%id %tooltip) tray-icon
       (prog1 (setf %tooltip value)
+        (%tray-icon-notify tray-icon win32:+nim-modify+)))))
+
+(defgeneric (setf tray-icon-icon) (value tray-icon)
+  (:method (value (tray-icon tray-icon))
+    (with-slots (%id %icon) tray-icon
+      (prog1 (setf %icon value)
         (%tray-icon-notify tray-icon win32:+nim-modify+)))))
