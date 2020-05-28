@@ -143,16 +143,7 @@ Ensures correct context and dispatches to `call-wndproc'"
                                          (background (cffi:make-pointer (1+ win32:+color-window+)))
                                          (menu-name (cffi:null-pointer))
                                          (icon-sm (cffi:null-pointer))
-                                         (wndclass-name (format nil "Window[~A(~A);~A]"
-                                                                (let ((name (exe-name)))
-                                                                  (if (<= (length name) 128)
-                                                                      name
-                                                                      (subseq name 0 128)))
-                                                                (let ((name (bt:thread-name (bt:current-thread))))
-                                                                  (if (<= (length name) 64)
-                                                                      name
-                                                                      (subseq name 0 64)))
-                                                                (%make-guid)))
+                                         wndclass-name
                                          (ex-style win32:+ws-ex-overlapped-window+)
                                          (name "MainWindow")
                                          (style win32:+ws-overlappedwindow+)
@@ -164,14 +155,25 @@ Ensures correct context and dispatches to `call-wndproc'"
                                          (menu (cffi:null-pointer))
                                          (lparam (cffi:null-pointer))
                                        &allow-other-keys)
-  (let ((wndclass-wrapper (make-instance 'wndclass-wrapper
-                                         :style class-style :cls-extra cls-extra
-                                         :wnd-extra wnd-extra :instance instance
-                                         :icon icon :cursor cursor
-                                         :background background :menu-name menu-name
-                                         :icon-sm icon-sm :name wndclass-name
-                                         :wndproc (cffi:callback %window-wndproc)))
-        (success nil))
+  (let* ((wndclass-name (or wndclass-name
+                            (format nil "Window[~A(~A);~A]"
+                                    (let ((name (exe-name)))
+                                      (if (<= (length name) 128)
+                                          name
+                                          (subseq name 0 128)))
+                                    (let ((name (bt:thread-name (bt:current-thread))))
+                                      (if (<= (length name) 64)
+                                          name
+                                          (subseq name 0 64)))
+                                    (%make-guid))))
+         (wndclass-wrapper (make-instance 'wndclass-wrapper
+                                          :style class-style :cls-extra cls-extra
+                                          :wnd-extra wnd-extra :instance instance
+                                          :icon icon :cursor cursor
+                                          :background background :menu-name menu-name
+                                          :icon-sm icon-sm :name wndclass-name
+                                          :wndproc (cffi:callback %window-wndproc)))
+         (success nil))
     (unwind-protect
          (let ((%*creating-window* obj))
            (setf (slot-value obj '%wndclass-wrapper) wndclass-wrapper)
