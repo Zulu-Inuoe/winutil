@@ -31,7 +31,7 @@
     :type wndclass-wrapper)
    (%hwnd
     :type hwnd-wrapper)
-   (%destroyed-windows
+   (%destroyed-wndclasses
     :type list
     :initform nil))
   (:documentation
@@ -52,10 +52,10 @@
 (defwndproc %window-manager-wndproc (hwnd msg wparam lparam)
   (case msg
     (#.+wm-window-destroyed+
-     (with-slots (%destroyed-windows) %*window-manager*
+     (with-slots (%destroyed-wndclasses) %*window-manager*
        (loop
-         :while %destroyed-windows
-         :do (dispose (pop %destroyed-windows))))
+         :while %destroyed-wndclasses
+         :do (dispose (pop %destroyed-wndclasses))))
      0)
     (t
      (win32:def-window-proc hwnd msg wparam lparam))))
@@ -67,7 +67,7 @@
 
 (defmethod initialize-instance :after ((window-manager window-manager) &key &allow-other-keys)
   (let* ((name (format nil "WindowManager[~A;~A;0x~X]"
-                       (let ((name (exe-name)))
+                       (let ((name (%exe-name)))
                          (if (<= (length name) 128)
                              name
                              (subseq name 0 128)))
@@ -125,10 +125,11 @@ Ensures correct context and dispatches to `call-wndproc'"
            (remhash hwnd-addr %*windows*)
            (slot-makunbound (slot-value window '%hwnd-wrapper) '%hwnd)
            (slot-makunbound window '%hwnd-wrapper)
-
            (let ((wm (%ensure-window-manager)))
-             (push window (slot-value wm '%destroyed-windows))
-             (win32:post-message (hwnd wm) +wm-window-destroyed+ 0 0)))))
+             (push (slot-value window '%wndclass-wrapper) (slot-value wm '%destroyed-wndclasses))
+             (slot-makunbound window '%wndclass-wrapper)
+             (win32:post-message (hwnd wm) +wm-window-destroyed+ 0 0))
+           (dispose window))))
       (t
        (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam)))))
 
@@ -157,7 +158,7 @@ Ensures correct context and dispatches to `call-wndproc'"
                                        &allow-other-keys)
   (let* ((wndclass-name (or wndclass-name
                             (format nil "Window[~A(~A);~A]"
-                                    (let ((name (exe-name)))
+                                    (let ((name (%exe-name)))
                                       (if (<= (length name) 128)
                                           name
                                           (subseq name 0 128)))
@@ -191,10 +192,9 @@ Ensures correct context and dispatches to `call-wndproc'"
         (dispose wndclass-wrapper)))))
 
 (define-dispose (obj window)
-  (unwind-protect (when (slot-boundp obj '%hwnd-wrapper)
-                    (dispose (slot-value obj '%hwnd-wrapper)))
-    (dispose (slot-value obj '%wndclass-wrapper))
-    (slot-makunbound obj '%wndclass-wrapper)))
+  ;; Don't dispose wndclass - that'll be done by `window-manager',
+  (when (slot-boundp obj '%hwnd-wrapper)
+    (dispose (slot-value obj '%hwnd-wrapper))))
 
 (defmethod hwnd ((obj window))
   (hwnd (slot-value obj '%hwnd-wrapper)))
