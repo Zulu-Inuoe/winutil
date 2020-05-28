@@ -26,6 +26,82 @@
   (:documentation
    "Invokes the wndproc of `window' with the given arguments."))
 
+(defclass window-manager ()
+  ((%wndclass
+    :type wndclass-wrapper)
+   (%hwnd
+    :type hwnd-wrapper)
+   (%destroyed-windows
+    :type list
+    :initform nil))
+  (:documentation
+   "Container for wndclass+hwnd who's wndproc shall `dispose' of `window' instances.
+ This is necessary because otherwise we would attempt to `win32:unregister-class' while a `window' was still using it."))
+
+(declaim (type (or null window-manager) %*window-manager*))
+(defvar %*window-manager* nil
+  "The current thread's `window-manager'.")
+
+(pushnew '(%*window-manager* . nil) bt:*default-special-bindings* :test #'equal)
+
+(when (find-package #1='#:slynk)
+  (pushnew '(%*window-manager* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
+
+(defconstant +wm-window-destroyed+ (+ win32:+wm-user+ 0))
+
+(defwndproc %window-manager-wndproc (hwnd msg wparam lparam)
+  (case msg
+    (#.+wm-window-destroyed+
+     (with-slots (%destroyed-windows) %*window-manager*
+       (loop
+         :while %destroyed-windows
+         :do (dispose (pop %destroyed-windows))))
+     0)
+    (t
+     (win32:def-window-proc hwnd msg wparam lparam))))
+
+(defun %exe-name ()
+  "Get the current executable's path and type as <path>.<type>"
+  (let ((path (exe-pathname)))
+    (concatenate 'string (pathname-name path) "." (pathname-type path))))
+
+(defmethod initialize-instance :after ((window-manager window-manager) &key &allow-other-keys)
+  (let* ((name (format nil "WindowManager[~A;~A;0x~X]"
+                       (let ((name (exe-name)))
+                         (if (<= (length name) 128)
+                             name
+                             (subseq name 0 128)))
+                       (let ((name (bt:thread-name (bt:current-thread))))
+                         (if (<= (length name) 64)
+                             name
+                             (subseq name 0 64)))
+                       (win32:get-current-thread-id)))
+         (wndclass (make-instance 'wndclass-wrapper
+                                  :name name
+                                  :wndproc (cffi:callback %window-manager-wndproc)
+                                  :background (cffi:null-pointer)
+                                  :cursor (cffi:null-pointer)))
+         (success nil))
+    (unwind-protect (with-slots (%wndclass %hwnd) window-manager
+                      (setf %hwnd (make-instance 'hwnd-wrapper
+                                                 :wndclass wndclass
+                                                 :name name
+                                                 :x 0 :y 0 :width 0 :height 0
+                                                 :ex-style 0
+                                                 :parent win32:+hwnd-message+)
+                            %wndclass wndclass
+                            success t))
+      (unless success
+        (dispose wndclass)))))
+
+(defmethod hwnd ((window-manager window-manager))
+  (hwnd (slot-value window-manager '%hwnd)))
+
+(defun %ensure-window-manager ()
+  (unless %*window-manager*
+    (setf %*window-manager* (make-instance 'window-manager)))
+  %*window-manager*)
+
 (defvar %*creating-window* nil
   "The `window' currently being created")
 (makunbound '%*creating-window*)
@@ -33,24 +109,28 @@
 (defwndproc %window-wndproc (hwnd msg wparam lparam)
   "wndproc used for `window' subclasses.
 Ensures correct context and dispatches to `call-wndproc'"
-  (case msg
-    (#.win32:+wm-getminmaxinfo+
-     ;; Special hook to catch initial window creation
-     (when (boundp '%*creating-window*)
-       (setf (slot-value %*creating-window* '%hwnd-wrapper) %*creating-hwnd-wrapper*
-             (slot-value (slot-value %*creating-window* '%hwnd-wrapper) '%hwnd) hwnd
-             (gethash (cffi:pointer-address hwnd) %*windows*) %*creating-window*))
+  (let ((hwnd-addr (cffi:pointer-address hwnd)))
+    (case msg
+      (#.win32:+wm-getminmaxinfo+
+       ;; Special hook to catch initial window creation
+       (when (boundp '%*creating-window*)
+         (setf (slot-value %*creating-window* '%hwnd-wrapper) %*creating-hwnd-wrapper*
+               (slot-value (slot-value %*creating-window* '%hwnd-wrapper) '%hwnd) hwnd
+               (gethash hwnd-addr %*windows*) %*creating-window*))
 
-     (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))
-    (#.win32:+wm-ncdestroy+
-     (let ((window (gethash (cffi:pointer-address hwnd) %*windows*)))
-       (unwind-protect (call-wndproc window msg wparam lparam)
-         (remhash (cffi:pointer-address hwnd) %*windows*)
-         (slot-makunbound (slot-value window '%hwnd-wrapper) '%hwnd)
-         (slot-makunbound window '%hwnd-wrapper)
-         (dispose window))))
-    (t
-     (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam))))
+       (call-wndproc (gethash hwnd-addr %*windows*) msg wparam lparam))
+      (#.win32:+wm-ncdestroy+
+       (let ((window (gethash hwnd-addr %*windows*)))
+         (unwind-protect (call-wndproc window msg wparam lparam)
+           (remhash hwnd-addr %*windows*)
+           (slot-makunbound (slot-value window '%hwnd-wrapper) '%hwnd)
+           (slot-makunbound window '%hwnd-wrapper)
+
+           (let ((wm (%ensure-window-manager)))
+             (push window (slot-value wm '%destroyed-windows))
+             (win32:post-message (hwnd wm) +wm-window-destroyed+ 0 0)))))
+      (t
+       (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam)))))
 
 (defmethod initialize-instance :after ((obj window)
                                        &key
@@ -64,8 +144,14 @@ Ensures correct context and dispatches to `call-wndproc'"
                                          (menu-name (cffi:null-pointer))
                                          (icon-sm (cffi:null-pointer))
                                          (wndclass-name (format nil "Window[~A(~A);~A]"
-                                                                (lisp-implementation-type)
-                                                                (lisp-implementation-version)
+                                                                (let ((name (exe-name)))
+                                                                  (if (<= (length name) 128)
+                                                                      name
+                                                                      (subseq name 0 128)))
+                                                                (let ((name (bt:thread-name (bt:current-thread))))
+                                                                  (if (<= (length name) 64)
+                                                                      name
+                                                                      (subseq name 0 64)))
                                                                 (%make-guid)))
                                          (ex-style win32:+ws-ex-overlapped-window+)
                                          (name "MainWindow")

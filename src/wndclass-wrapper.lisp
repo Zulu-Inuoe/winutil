@@ -57,7 +57,8 @@
       (setf (slot-value obj '%class-atom) (cffi:make-pointer class-atom)))))
 
 (define-dispose (obj wndclass-wrapper)
-  (win32:unregister-class (wndclass-wrapper-atom obj) (wndclass-wrapper-instance obj))
+  (or (win32:unregister-class (wndclass-wrapper-atom obj) (wndclass-wrapper-instance obj))
+      (win32-error))
   (slot-makunbound obj '%class-atom))
 
 (defmethod wndclass-name ((obj wndclass-wrapper))
