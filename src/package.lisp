@@ -18,6 +18,7 @@
 
    #:exe-pathname
    #:exe-dir-pathname
+   #:drive-pathnames
    #:processor-count
 
    #:clip-cursor

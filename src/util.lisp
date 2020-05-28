@@ -71,6 +71,19 @@ Meant as a fallback."
 Note: This is not the current working directory."
   (uiop:pathname-directory-pathname (exe-pathname)))
 
+(defun drive-pathnames ()
+  "Return a list of available drives as pathnames."
+  (let ((num-chars (win32:get-logical-drive-strings 0 (cffi:null-pointer))))
+    (cffi:with-foreign-object (buf 'win32:tchar (1+ num-chars))
+      (win32:get-logical-drive-strings num-chars buf)
+      (loop
+        :with p := buf
+        :until (zerop (cffi:mem-aref p 'win32:tchar))
+        :collect
+        (let ((str (tstring-to-lisp p)))
+          (cffi:incf-pointer p (* (1+ (length str)) (cffi:foreign-type-size 'win32:tchar)))
+          (uiop:parse-native-namestring str))))))
+
 (defun processor-count ()
   "Get the number of logical processors on this machine."
   (cffi:with-foreign-object (system-info 'win32:system-info)
