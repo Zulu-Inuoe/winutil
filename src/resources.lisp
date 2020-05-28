@@ -71,63 +71,127 @@
    :data (required-argument :data)))
 
 (defmethod make-load-form ((resource resource) &optional environment)
-  (make-load-form-saving-slots resource :slot-names '(%data) :environment environment))
+  (declare (ignore environment))
+  (let ((data (slot-value resource '%data)))
+    (values
+     `(make-instance ',(class-of resource) :data (make-array ,(length data)
+                                                             :element-type '(unsigned-byte 8)
+                                                             :initial-contents ,data))
+     nil)))
 
-(defclass icon-resource (resource)
+#+sbcl
+(progn
+  (defgeneric on-quit (obj))
+  (defgeneric on-restore (obj))
+
+  (defclass restoreable (finalizable)
+    ((%weak-ptr
+      :type sb-ext:weak-pointer)))
+
+  (defvar %*restoreables* (make-hash-table :test 'eq :synchronized t))
+
+  (defmethod initialize-instance :after ((obj restoreable) &key &allow-other-keys)
+    (let ((weak-ptr (sb-ext:make-weak-pointer obj)))
+      (setf (slot-value obj '%weak-ptr) weak-ptr
+            (gethash weak-ptr %*restoreables*) weak-ptr)))
+
+  (define-finalizer restoreable (%weak-ptr)
+    (remhash %weak-ptr %*restoreables*))
+
+  (defmethod on-quit ((obj restoreable))
+    nil)
+
+  (defmethod on-restore ((obj restoreable))
+    nil)
+
+  (defun %quit-on-quit ()
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (multiple-value-bind (value validp) (sb-ext:weak-pointer-value k)
+                 (if validp
+                     (on-quit value)
+                     (remhash k %*restoreables*))))
+             %*restoreables*))
+
+  (pushnew '%quit-on-quit sb-ext:*exit-hooks*)
+
+  (defun %restore-on-init ()
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (multiple-value-bind (value validp) (sb-ext:weak-pointer-value k)
+                 (if validp
+                     (on-restore value)
+                     (remhash k %*restoreables*))))
+             %*restoreables*))
+
+  (pushnew '%restore-on-init sb-ext:*init-hooks*))
+
+(defclass icon-resource (resource
+                         #+sbcl
+                         restoreable
+                         finalizable)
   ((%hicon
-    :type cffi:foreign-pointer)))
+    :type cffi:foreign-pointer
+    :reader hicon)))
+
+(defun %initialize-hicon (icon-resource)
+  (setf (slot-value icon-resource '%hicon)
+        (not-null-or-error
+         (let ((data (slot-value icon-resource '%data)))
+           (cffi:with-pointer-to-vector-data (data-ptr data)
+             (win32:create-icon-from-resource data-ptr (length data) t #x00030000))))))
+
+(defmethod initialize-instance :after ((icon-resource icon-resource) &key &allow-other-keys)
+  (%initialize-hicon icon-resource))
+
+(define-finalizer icon-resource (%hicon)
+  (win32:destroy-icon %hicon))
+
+#+sbcl
+(defmethod on-quit ((icon-resource icon-resource))
+  (win32:destroy-icon (slot-value icon-resource '%hicon))
+  (slot-makunbound icon-resource '%hicon))
+
+#+sbcl
+(defmethod on-restore ((icon-resource icon-resource))
+  (%initialize-hicon icon-resource))
 
 (defun make-icon-resource (rgba width height)
   (make-instance 'icon-resource
                  :data (%make-resource-data rgba width height t 0 0)))
 
-(defmethod hicon ((icon-resource icon-resource))
-  (unless (slot-boundp icon-resource '%hicon)
-    (setf (slot-value icon-resource '%hicon)
-          (let ((data (slot-value icon-resource '%data)))
-            (cffi:with-pointer-to-vector-data (data-ptr data)
-              (not-null-or-error (win32:create-icon-from-resource data-ptr (length data) t #x00030000))))))
-  (slot-value icon-resource '%hicon))
-
-(define-dispose (icon-resource icon-resource)
-  (when (slot-boundp icon-resource '%hicon)
-    (win32:destroy-icon (slot-value icon-resource '%hicon))
-    (slot-makunbound icon-resource '%hicon))
-  (values))
-
-(defclass cursor-resource (resource)
+(defclass cursor-resource (resource
+                           #+sbcl
+                           restoreable
+                           finalizable)
   ((%hcursor
-    :type cffi:foreign-pointer)
-   (%hicon
-    :type cffi:foreign-pointer)))
+    :type cffi:foreign-pointer
+    :reader hcursor)))
 
-(defun make-cursor-resource (rgba width height &key (hotspot-x (truncate width 2)) (hotspot-y (truncate (abs height) 2)))
+(defun %initialize-hcursor (cursor-resource)
+  (setf (slot-value cursor-resource '%hcursor)
+        (not-null-or-error
+         (let ((data (slot-value cursor-resource '%data)))
+           (cffi:with-pointer-to-vector-data (data-ptr data)
+             (win32:create-icon-from-resource data-ptr (length data) nil #x00030000))))))
+
+(defmethod initialize-instance :after ((cursor-resource cursor-resource) &key &allow-other-keys)
+  (%initialize-hcursor cursor-resource))
+
+(define-finalizer cursor-resource (%hcursor)
+  (win32:destroy-cursor %hcursor))
+
+#+sbcl
+(defmethod on-quit ((cursor-resource cursor-resource))
+  (win32:destroy-cursor (slot-value cursor-resource '%hcursor))
+  (slot-makunbound cursor-resource '%hcursor))
+
+#+sbcl
+(defmethod on-restore ((cursor-resource cursor-resource))
+  (%initialize-hcursor cursor-resource))
+
+(defun make-cursor-resource (rgba width height &key hotspot-x hotspot-y)
   (make-instance 'cursor-resource
-                 :data (%make-resource-data rgba width height nil hotspot-x hotspot-y)))
-
-(defmethod hcursor ((cursor-resource cursor-resource))
-  (unless (slot-boundp cursor-resource '%hcursor)
-    (setf (slot-value cursor-resource '%hcursor)
-          (not-null-or-error
-           (let ((data (slot-value cursor-resource '%data)))
-             (cffi:with-pointer-to-vector-data (data-ptr data)
-               (win32:create-icon-from-resource data-ptr (length data) nil #x00030000))))))
-  (slot-value cursor-resource '%hcursor))
-
-(defmethod hicon ((cursor-resource cursor-resource))
-  (unless (slot-boundp cursor-resource '%hicon)
-    (setf (slot-value cursor-resource '%hicon)
-          (not-null-or-error
-           (let ((data (slot-value cursor-resource '%data)))
-             (cffi:with-pointer-to-vector-data (data-ptr data)
-               (win32:create-icon-from-resource (cffi:inc-pointer data-ptr 4) (- (length data) 4) t #x00030000))))))
-  (slot-value cursor-resource '%hicon))
-
-(define-dispose (cursor-resource cursor-resource)
-  (when (slot-boundp cursor-resource '%hcursor)
-    (win32:destroy-cursor (slot-value cursor-resource '%hcursor))
-    (slot-makunbound cursor-resource '%hcursor))
-  (when (slot-boundp cursor-resource '%hicon)
-    (win32:destroy-icon (slot-value cursor-resource '%hicon))
-    (slot-makunbound cursor-resource '%hicon))
-  (values))
+                 :data (%make-resource-data rgba width height nil
+                                            (or hotspot-x (truncate width 2))
+                                            (or hotspot-y (truncate (abs height) 2)))))
