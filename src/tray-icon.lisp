@@ -17,7 +17,7 @@
 
 (declaim (type (or null tray-icon-window) %*tray-icon-window*))
 (defvar %*tray-icon-window* nil
-  "`tray-icon-window' to which tray icons are attached.")
+  "The current thread's `tray-icon-window' to which tray icons are attached.")
 
 (pushnew '(%*tray-icon-window* . nil) bt:*default-special-bindings* :test #'equal)
 
