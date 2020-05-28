@@ -23,6 +23,8 @@
    (:file "tray-icon" :depends-on ("package" "error" "util" "window")))
   :depends-on
   (#:alexandria
+   #:bordeaux-threads
    #:cffi
    #:dispose
-   #:win32))
+   #:win32
+   #:uiop))
