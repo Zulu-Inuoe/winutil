@@ -69,7 +69,7 @@
                (or (tray-icon-icon tray-icon)
                    (win32:load-icon (cffi:null-pointer) win32:+idi-application+)))))
     (cffi:with-foreign-object (nid 'win32:notify-icon-data)
-      (%zero-memory nid 'win32:notify-icon-data)
+      (win32:zero-memory nid (cffi:foreign-type-size 'win32:notify-icon-data))
       (cffi:with-foreign-slots ((win32:size win32:hwnd win32:id win32:flags
                                             win32:callback-message win32:icon win32:tip)
                                 nid win32:notify-icon-data)

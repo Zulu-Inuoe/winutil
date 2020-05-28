@@ -84,6 +84,3 @@ Note: This is not the current working directory."
 (defun %memset (buf value size)
   (dotimes (i size)
     (setf (cffi:mem-aref buf :uint8 i) value)))
-
-(defun %zero-memory (ptr type)
-  (%memset ptr 0 (cffi:foreign-type-size type)))

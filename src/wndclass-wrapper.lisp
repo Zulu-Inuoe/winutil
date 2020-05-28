@@ -32,7 +32,7 @@
                                          (icon-sm (cffi:null-pointer))
                                        &allow-other-keys)
   (cffi:with-foreign-object (class 'win32:wndclassex)
-    (%zero-memory class 'win32:wndclassex)
+    (win32:zero-memory class (cffi:foreign-type-size 'win32:wndclassex))
     (cffi:with-foreign-slots ((win32:size win32:style win32:wndproc
                                           win32:cls-extra win32:wnd-extra
                                           win32:instance
