@@ -123,3 +123,17 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
            (t
             (win32:translate-message msg)
             (win32:dispatch-message msg))))))
+
+(defun wparam (value)
+  "Coerces `value' into an `win32:wparam'"
+  (etypecase value
+    ((unsigned-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:wparam))) value)
+    ((signed-byte #1#) (ldb (byte #1# 0) value))
+    (cffi:foreign-pointer (cffi:pointer-address value))))
+
+(defun lparam (value)
+  "Coerces `value' into an `win32:lparam'"
+  (etypecase value
+    ((signed-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:lparam))) value)
+    ((unsigned-byte #1#) (logior value (- (mask-field (byte 1 #.(1- #1#)) value))))
+    (cffi:foreign-pointer (lparam (cffi:pointer-address value)))))

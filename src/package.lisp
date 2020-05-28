@@ -33,6 +33,8 @@
    #:list-child-windows
    #:defwndproc
    #:message-pump
+   #:wparam
+   #:lparam
 
    #:hicon
    #:hcursor
