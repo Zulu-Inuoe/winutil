@@ -61,6 +61,16 @@
       (win32-error))
   value)
 
+(defun window-text (hwnd &aux (hwnd (hwnd hwnd)))
+  (let ((len (1+ (win32:get-window-text-length hwnd))))
+    (cffi:with-foreign-objects ((buf 'win32:tchar len))
+      (win32:get-window-text hwnd buf len)
+      (tstring-to-lisp buf))))
+
+(defun (setf window-text) (value hwnd &aux (hwnd (hwnd hwnd)))
+  (win32:set-window-text hwnd value)
+  value)
+
 (defmacro defwndproc (name (hwnd msg wparam lparam) &body body)
   "Utility Wrapper around `cffi:defcallback' for defining wndproc callbacks.
 Defines a `cffi:callback' with appropriate signature, a well as a regular `defun'.
