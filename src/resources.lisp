@@ -114,6 +114,7 @@
              %*restoreables*))
 
   (pushnew '%quit-on-quit sb-ext:*exit-hooks*)
+  (pushnew '%quit-on-quit sb-ext:*save-hooks*)
 
   (defun %restore-on-init ()
     (maphash (lambda (k v)
