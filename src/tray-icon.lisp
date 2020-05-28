@@ -57,8 +57,7 @@
       ((= msg %taskbar-created-message)
        (loop
          :for (id . icon) :in %existing-icons
-         :do (with-slots (%id %tooltip) icon
-               (%tray-icon-notify win32:+nim-add+ %id %+tray-icon-message+ %tooltip)))
+         :do (%tray-icon-notify icon win32:+nim-add+))
        0)
       (t
        (call-next-method)))))
