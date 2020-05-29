@@ -26,6 +26,8 @@
    #:cursor-position
    #:cursor-position*
    #:set-cursor-position
+   #:cursor-x
+   #:cursor-y
 
    #:list-windows
    #:list-child-windows
