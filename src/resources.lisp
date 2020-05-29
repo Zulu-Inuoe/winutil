@@ -15,7 +15,7 @@
            (mask-off (+ rgba-off rgba-len))
            (mask-len (* height (truncate (+ width 7) 8)))
            (icon-len (+ head-len rgba-len mask-len))
-           (data (make-array icon-len :element-type '(unsigned-byte 8) :initial-element 0)))
+           (data (cffi:make-shareable-byte-vector icon-len)))
       (unless icon-p
         (setf
          ;; 16 hotspot x
@@ -34,7 +34,7 @@
                        (bmi8 (+ offset 3)) (ldb (byte 8 24) value))))
         (setf
          ;; 32 header size
-         (bmi8 0) head-len
+         (bmi32 0) head-len
          ;; 32 width
          (bmi32 4) width
          ;; 32 height
@@ -46,7 +46,10 @@
          ;;32 size
          (bmi32 20) rgba-len
          ;; Leave others 0
-         ))
+         (bmi32 24) 0
+         (bmi32 28) 0
+         (bmi32 32) 0
+         (bmi32 36) 0))
 
       ;; RGBA
       (if flip
@@ -74,9 +77,8 @@
   (declare (ignore environment))
   (let ((data (slot-value resource '%data)))
     (values
-     `(make-instance ',(class-of resource) :data (make-array ,(length data)
-                                                             :element-type '(unsigned-byte 8)
-                                                             :initial-contents ,data))
+     `(make-instance ',(class-of resource) :data (replace (cffi:make-shareable-byte-vector ,(length data))
+                                                           ,data))
      nil)))
 
 #+sbcl
