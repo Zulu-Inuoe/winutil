@@ -3,7 +3,9 @@
 (defclass hwnd-wrapper (disposable)
   ((%hwnd
     :type cffi:foreign-pointer
-    :reader hwnd-wrapper-hwnd)))
+    :reader hwnd-wrapper-hwnd)
+   (%parent
+    :initarg :parent)))
 
 (defvar %*creating-hwnd-wrapper* nil
   "The `hwnd-wrapper' currently being created via `win32:create-window-ex'")
