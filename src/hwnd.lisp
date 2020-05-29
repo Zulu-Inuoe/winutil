@@ -45,15 +45,15 @@
         (win32-error))
     (cffi:foreign-slot-value r 'win32:rect 'win32:left)))
 
-(defun (setf hwnd-x) (value hwnd)
-  (set-hwnd-pos hwnd value (hwnd-y hwnd))
-  value)
-
 (defun hwnd-y (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
     (or (win32:get-window-rect (hwnd hwnd) r)
         (win32-error))
     (cffi:foreign-slot-value r 'win32:rect 'win32:top)))
+
+(defun (setf hwnd-x) (value hwnd)
+  (set-hwnd-pos hwnd value (hwnd-y hwnd))
+  value)
 
 (defun (setf hwnd-y) (value hwnd)
   (set-hwnd-pos hwnd (hwnd-x hwnd) value)
@@ -100,16 +100,16 @@
     (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
        (cffi:foreign-slot-value r 'win32:rect 'win32:left))))
 
-(defun (setf hwnd-width) (value hwnd)
-  (set-hwnd-size hwnd value (hwnd-height hwnd))
-  value)
-
 (defun hwnd-height (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
     (or (win32:get-window-rect (hwnd hwnd) r)
         (win32-error))
     (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
        (cffi:foreign-slot-value r 'win32:rect 'win32:top))))
+
+(defun (setf hwnd-width) (value hwnd)
+  (set-hwnd-size hwnd value (hwnd-height hwnd))
+  value)
 
 (defun (setf hwnd-height) (value hwnd)
   (set-hwnd-size hwnd (hwnd-width hwnd) value)
