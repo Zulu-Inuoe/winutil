@@ -2,9 +2,13 @@
 
 (defgeneric hwnd (obj)
   (:documentation "Coerce `obj' into an `hwnd'.")
-  (:method (obj) obj)
+  (:method (obj)
+    obj)
+  (:method ((obj null))
+    (declare (ignore obj))
+    (cffi:null-pointer))
   (:method ((obj integer))
-    (cffi:make-pointer obj)))
+    (%coerce-pointer obj)))
 
 (defun hwnd-pos (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)

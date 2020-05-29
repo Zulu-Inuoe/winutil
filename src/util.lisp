@@ -97,3 +97,9 @@ Note: This is not the current working directory."
 (defun %memset (buf value size)
   (dotimes (i size)
     (setf (cffi:mem-aref buf :uint8 i) value)))
+
+(defun %coerce-pointer (value)
+  "Coerces `value' into a `cffi:foreign-pointer'"
+  (check-type value (or (signed-byte #1=#.(* 8 (cffi:foreign-type-size :pointer)))
+                        (unsigned-byte #1#)))
+  (cffi:make-pointer (ldb (byte #1# 0) value)))

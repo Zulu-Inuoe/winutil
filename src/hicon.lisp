@@ -5,4 +5,7 @@
   (:method (obj)
     obj)
   (:method ((obj null))
-    (cffi:null-pointer)))
+    (declare (ignore obj))
+    (cffi:null-pointer))
+  (:method ((obj integer))
+    (%coerce-pointer obj)))
