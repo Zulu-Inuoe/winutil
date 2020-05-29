@@ -62,14 +62,14 @@
    #:wndclass-wrapper-atom
 
    #:hwnd
-   #:hwnd-x
-   #:hwnd-y
    #:hwnd-pos
    #:hwnd-pos*
+   #:hwnd-x
+   #:hwnd-y
+   #:hwnd-size
+   #:hwnd-size*
    #:hwnd-width
    #:hwnd-height
-   #:hwnd-dimensions
-   #:hwnd-dimensions*
    #:hwnd-text
 
    #:hwnd-wrapper

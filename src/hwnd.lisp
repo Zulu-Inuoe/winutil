@@ -6,109 +6,114 @@
   (:method ((obj integer))
     (cffi:make-pointer obj)))
 
-(defun hwnd-x (hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (cffi:foreign-slot-value r 'win32:rect 'win32:left)))
-
-(defun (setf hwnd-x) (value hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (win32:set-window-pos
-     (hwnd hwnd) (cffi:null-pointer)
-     value (cffi:foreign-slot-value r 'win32:rect 'win32:top)
-     0 0
-     (logior win32:+swp-nosize+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+))))
-
-(defun hwnd-y (hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (cffi:foreign-slot-value r 'win32:rect 'win32:top)))
-
-(defun (setf hwnd-y) (value hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (win32:set-window-pos
-     (hwnd hwnd) (cffi:null-pointer)
-     (cffi:foreign-slot-value r 'win32:rect 'win32:left) value
-     0 0
-     (logior win32:+swp-nosize+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+))))
-
 (defun hwnd-pos (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
     (values
      (cffi:foreign-slot-value r 'win32:rect 'win32:left)
      (cffi:foreign-slot-value r 'win32:rect 'win32:top))))
 
+(defun set-hwnd-pos (hwnd x y)
+  (or (win32:set-window-pos (hwnd hwnd) (cffi:null-pointer) x y 0 0
+                            (logior win32:+swp-nosize+ win32:+swp-nozorder+
+                                    win32:+swp-noactivate+ win32:+swp-noownerzorder+))
+      (win32-error))
+  (values x y))
+
+(define-setf-expander hwnd-pos (hwnd)
+  (let ((hwnd-var (gensym "HWND"))
+        (x-var (gensym "X"))
+        (y-var (gensym "Y")))
+    (values `(,hwnd-var)
+            `(,hwnd)
+            `(,x-var ,y-var)
+            `(set-hwnd-pos ,hwnd-var (or ,x-var 0) (or ,y-var 0))
+            `(values ,x-var ,y-var))))
+
 (defun hwnd-pos* (hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (cons
-     (cffi:foreign-slot-value r 'win32:rect 'win32:left)
-     (cffi:foreign-slot-value r 'win32:rect 'win32:top))))
+  (multiple-value-bind (x y) (hwnd-pos hwnd)
+    (cons x y)))
 
 (defun (setf hwnd-pos*) (value hwnd)
-  (win32:set-window-pos
-   (hwnd hwnd) (cffi:null-pointer)
-   (car value) (cdr value)
-   0 0
-   (logior win32:+swp-nosize+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+)))
+  (set-hwnd-pos hwnd (car value) (cdr value))
+  value)
 
-(defun hwnd-width (hwnd)
+(defun hwnd-x (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
-       (cffi:foreign-slot-value r 'win32:rect 'win32:left))))
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
+    (cffi:foreign-slot-value r 'win32:rect 'win32:left)))
 
-(defun (setf hwnd-width) (value hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (win32:set-window-pos
-     (hwnd hwnd) (cffi:null-pointer)
-     0 0
-     value (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom) (cffi:foreign-slot-value r 'win32:rect 'win32:top))
-     (logior win32:+swp-nomove+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+))))
+(defun (setf hwnd-x) (value hwnd)
+  (set-hwnd-pos hwnd value (hwnd-y hwnd))
+  value)
 
-(defun hwnd-height (hwnd)
+(defun hwnd-y (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
-       (cffi:foreign-slot-value r 'win32:rect 'win32:top))))
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
+    (cffi:foreign-slot-value r 'win32:rect 'win32:top)))
 
-(defun (setf hwnd-height) (value hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (win32:set-window-pos
-     (hwnd hwnd) (cffi:null-pointer)
-     0 0
-     (- (cffi:foreign-slot-value r 'win32:rect 'win32:right) (cffi:foreign-slot-value r 'win32:rect 'win32:left)) value
-     (logior win32:+swp-nomove+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+))))
+(defun (setf hwnd-y) (value hwnd)
+  (set-hwnd-pos hwnd (hwnd-x hwnd) value)
+  value)
 
-(defun hwnd-dimensions (hwnd)
+(defun hwnd-size (hwnd)
   (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
     (values
      (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
        (cffi:foreign-slot-value r 'win32:rect 'win32:left))
      (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
         (cffi:foreign-slot-value r 'win32:rect 'win32:top)))))
 
-(defun hwnd-dimensions* (hwnd)
-  (cffi:with-foreign-object (r 'win32:rect)
-    (win32:get-window-rect (hwnd hwnd) r)
-    (cons
-     (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
-        (cffi:foreign-slot-value r 'win32:rect 'win32:left))
-     (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
-        (cffi:foreign-slot-value r 'win32:rect 'win32:top)))))
+(defun set-hwnd-size (hwnd width height)
+  (or (win32:set-window-pos (hwnd hwnd) (cffi:null-pointer)  0 0 width height
+                            (logior win32:+swp-nomove+ win32:+swp-nozorder+
+                                    win32:+swp-noactivate+ win32:+swp-noownerzorder+))
+      (win32-error))
+  (values width height))
 
-(defun (setf hwnd-dimensions*) (value hwnd)
-  (win32:set-window-pos
-   (hwnd hwnd) (cffi:null-pointer)
-   0 0
-   (car value) (cdr value)
-   (logior win32:+swp-nomove+ win32:+swp-nozorder+ win32:+swp-noactivate+ win32:+swp-noownerzorder+)))
+(define-setf-expander hwnd-size (hwnd)
+  (let ((hwnd-var (gensym "HWND"))
+        (width-var (gensym "WIDTH"))
+        (height-var (gensym "HEIGHT")))
+    (values `(,hwnd-var)
+            `(,hwnd)
+            `(,width-var ,height-var)
+            `(set-hwnd-size ,hwnd-var ,width-var ,height-var)
+            `(values ,width-var ,height-var))))
+
+(defun hwnd-size* (hwnd)
+  (multiple-value-bind (width height) (hwnd-size hwnd)
+    (cons width height)))
+
+(defun (setf hwnd-size*) (value hwnd)
+  (set-hwnd-size hwnd (car value) (cdr value)))
+
+(defun hwnd-width (hwnd)
+  (cffi:with-foreign-object (r 'win32:rect)
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
+    (- (cffi:foreign-slot-value r 'win32:rect 'win32:right)
+       (cffi:foreign-slot-value r 'win32:rect 'win32:left))))
+
+(defun (setf hwnd-width) (value hwnd)
+  (set-hwnd-size hwnd value (hwnd-height hwnd))
+  value)
+
+(defun hwnd-height (hwnd)
+  (cffi:with-foreign-object (r 'win32:rect)
+    (or (win32:get-window-rect (hwnd hwnd) r)
+        (win32-error))
+    (- (cffi:foreign-slot-value r 'win32:rect 'win32:bottom)
+       (cffi:foreign-slot-value r 'win32:rect 'win32:top))))
+
+(defun (setf hwnd-height) (value hwnd)
+  (set-hwnd-size hwnd (hwnd-width hwnd) value)
+  value)
 
 (defun hwnd-text (hwnd &aux (hwnd hwnd))
   (let ((len (win32:get-window-text-length hwnd)))
