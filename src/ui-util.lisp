@@ -76,6 +76,46 @@
   (set-cursor-position (cursor-x) value)
   value)
 
+(deftype wparam ()
+  "Valid value range for `win32:wparam'"
+  `(unsigned-byte #.(* 8 (cffi:foreign-type-size 'win32:wparam))))
+
+(defun wparam (value)
+  "Coerces `value' into an `win32:wparam'"
+  (etypecase value
+    (wparam value)
+    ((signed-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:wparam)))
+     (ldb (byte #1# 0) value))
+    (cffi:foreign-pointer (cffi:pointer-address value))))
+
+(deftype lparam ()
+  "Value value range for `win32:lparam'"
+  `(signed-byte #.(* 8 (cffi:foreign-type-size 'win32:lparam))))
+
+(defun lparam (value)
+  "Coerces `value' into an `win32:lparam'"
+  (etypecase value
+    (lparam value)
+    ((unsigned-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:lparam)))
+     (logior value (- (mask-field (byte 1 #.(1- #1#)) value))))
+    (cffi:foreign-pointer
+     (let ((value (cffi:pointer-address value)))
+       (logior value (- (mask-field (byte 1 #.(1- #1#)) value)))))))
+
+(deftype lresult ()
+  "Value value range for `win32:lresult'"
+  `(signed-byte #.(* 8 (cffi:foreign-type-size 'win32:lresult))))
+
+(defun lresult (value)
+  "Coerces `value' into an `win32:lresult'"
+  (etypecase value
+    (lresult value)
+    ((unsigned-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:lresult)))
+     (logior value (- (mask-field (byte 1 #.(1- #1#)) value))))
+    (cffi:foreign-pointer
+     (let ((value (cffi:pointer-address value)))
+       (logior value (- (mask-field (byte 1 #.(1- #1#)) value)))))))
+
 (defmacro defwndproc (name (hwnd msg wparam lparam) &body body)
   "Utility Wrapper around `cffi:defcallback' for defining wndproc callbacks.
 Defines a `cffi:callback' with appropriate signature, a well as a regular `defun'.
@@ -90,8 +130,8 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
      (defun ,name (,hwnd ,msg ,wparam ,lparam)
        (declare (type cffi:foreign-pointer ,hwnd)
                 (type (unsigned-byte 32) ,msg)
-                (type (unsigned-byte #.(* (cffi:foreign-type-size :pointer) 8)) ,wparam)
-                (type (signed-byte #.(* (cffi:foreign-type-size :pointer) 8)) ,lparam))
+                (type wparam ,wparam)
+                (type lparam ,lparam))
        ,@body)
      ;; There's no way to check if the callback is already defined
      ;; But `cffi:get-callback' will signal an error if it doesn't exist
@@ -104,8 +144,8 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
             retry
               (restart-case
                   (let ((ret (,name ,hwnd ,msg ,wparam ,lparam)))
-                    (unless (typep ret '(signed-byte #.(* (cffi:foreign-type-size :pointer) 8)))
-                      (error 'type-error :datum ret :expected-type '(signed-byte #.(* (cffi:foreign-type-size :pointer) 8))))
+                    (unless (typep ret 'lresult)
+                      (error 'type-error :datum ret :expected-type 'lresult))
                     (return ret))
                 (retry-wndproc ()
                   :report ,(format nil "Retry calling the wndproc (~A)." name)
@@ -128,17 +168,3 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
            (t
             (win32:translate-message msg)
             (win32:dispatch-message msg))))))
-
-(defun wparam (value)
-  "Coerces `value' into an `win32:wparam'"
-  (etypecase value
-    ((unsigned-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:wparam))) value)
-    ((signed-byte #1#) (ldb (byte #1# 0) value))
-    (cffi:foreign-pointer (cffi:pointer-address value))))
-
-(defun lparam (value)
-  "Coerces `value' into an `win32:lparam'"
-  (etypecase value
-    ((signed-byte #1=#.(* 8 (cffi:foreign-type-size 'win32:lparam))) value)
-    ((unsigned-byte #1#) (logior value (- (mask-field (byte 1 #.(1- #1#)) value))))
-    (cffi:foreign-pointer (lparam (cffi:pointer-address value)))))

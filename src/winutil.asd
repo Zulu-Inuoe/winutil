@@ -15,7 +15,7 @@
    (:file "clipboard" :depends-on ("package" "util"))
    (:file "wndclass" :depends-on ("package"))
    (:file "wndclass-wrapper" :depends-on ("package" "wndclass" "hicon" "hcursor"))
-   (:file "hwnd" :depends-on ("package" "util"))
+   (:file "hwnd" :depends-on ("package" "util" "ui-util"))
    (:file "hwnd-wrapper" :depends-on ("package" "wndclass" "hwnd"))
    (:file "hmenu-wrapper" :depends-on ("package"))
    (:file "window" :depends-on ("package" "hwnd-wrapper" "wndclass-wrapper" "util"))

@@ -132,7 +132,7 @@
       (win32-error))
   value)
 
-(declaim (type (function (cffi:foreign-pointer (signed-byte #.(* (cffi:foreign-type-size :pointer) 8))) (values boolean &rest t))
+(declaim (type (function (cffi:foreign-pointer lparam) (values boolean &rest t))
                %*map-windows-fn*))
 (defvar %*map-windows-fn*)
 

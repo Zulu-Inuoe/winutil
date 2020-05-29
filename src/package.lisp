@@ -31,10 +31,11 @@
 
    #:list-windows
    #:list-child-windows
-   #:defwndproc
-   #:message-pump
    #:wparam
    #:lparam
+   #:lresult
+   #:defwndproc
+   #:message-pump
 
    #:hicon
    #:hcursor
