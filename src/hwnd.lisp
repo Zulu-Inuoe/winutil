@@ -115,17 +115,17 @@
   (set-hwnd-size hwnd (hwnd-width hwnd) value)
   value)
 
-(defun hwnd-text (hwnd &aux (hwnd hwnd))
-  (let ((len (win32:get-window-text-length hwnd)))
-    (cond
-      ((zerop len) "")
-      (t
-       (cffi:with-foreign-object (buf 'win32:tchar (1+ len))
+(defun hwnd-text (hwnd &aux (hwnd (hwnd hwnd)))
+  (let ((len (prog1 (win32:get-window-text-length hwnd)
+               (check-last-error))))
+    (if (zerop len)
+        ""
+        (cffi:with-foreign-object (buf 'win32:tchar (1+ len))
          (let ((res (win32:get-window-text hwnd buf (1+ len)))
                (last-error (win32:get-last-error)))
            (when (zerop len)
              (win32-error last-error))
-           (tstring-to-lisp buf :count res)))))))
+           (tstring-to-lisp buf :count res))))))
 
 (defun (setf hwnd-text) (value hwnd &aux (hwnd (hwnd hwnd)))
   (or (win32:set-window-text hwnd value)
