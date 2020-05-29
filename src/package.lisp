@@ -66,10 +66,12 @@
    #:hwnd
    #:hwnd-pos
    #:hwnd-pos*
+   #:set-hwnd-pos
    #:hwnd-x
    #:hwnd-y
    #:hwnd-size
    #:hwnd-size*
+   #:set-hwnd-size
    #:hwnd-width
    #:hwnd-height
    #:hwnd-text
