@@ -12,3 +12,6 @@
 (define-dispose (obj hmenu-wrapper)
   (win32:destroy-menu (hmenu-wrapper-hmenu obj))
   (slot-makunbound obj '%hmenu))
+
+(defmethod hmenu ((obj hmenu-wrapper))
+  (hmenu-wrapper-hmenu obj))

@@ -32,7 +32,7 @@
            (win32:create-window-ex
             ex-style (wndclass-atom wndclass) name style
             x y width height
-            (hwnd parent) menu instance lparam)))))
+            (hwnd parent) (hmenu menu) instance lparam)))))
 
 (define-dispose (obj hwnd-wrapper)
   (or (win32:destroy-window (hwnd-wrapper-hwnd obj))

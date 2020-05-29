@@ -39,6 +39,7 @@
 
    #:hicon
    #:hcursor
+   #:hmenu
 
    #:icon-resource
    #:make-icon-resource
