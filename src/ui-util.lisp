@@ -37,7 +37,7 @@
 (defun set-cursor-position (x y)
   (or (win32:set-cursor-pos x y)
       (win32-error))
-  (values))
+  (values x y))
 
 (define-setf-expander cursor-position ()
   (let ((x-var (gensym "X"))
@@ -45,30 +45,15 @@
     (values ()
             ()
             `(,x-var ,y-var)
-            `(set-cursor-position (or ,x-var 0) (or ,y-var 0))
-            `(cursor-position))))
+            `(set-cursor-position ,x-var ,y-var)
+            `(values ,x-var ,y-var))))
 
 (defun cursor-position* ()
-  (cffi:with-foreign-object (pt 'win32:point)
-    (or (win32:get-cursor-pos pt)
-        (win32-error))
-    (cons
-     (cffi:foreign-slot-value pt 'win32:point 'win32:x)
-     (cffi:foreign-slot-value pt 'win32:point 'win32:y))))
+  (multiple-value-bind (x y) (cursor-position)
+    (cons x y)))
 
 (defun (setf cursor-position*) (value)
-  (or (win32:set-cursor-pos (car value) (cdr value))
-      (win32-error))
-  value)
-
-(defun window-text (hwnd &aux (hwnd (hwnd hwnd)))
-  (let ((len (1+ (win32:get-window-text-length hwnd))))
-    (cffi:with-foreign-objects ((buf 'win32:tchar len))
-      (win32:get-window-text hwnd buf len)
-      (tstring-to-lisp buf))))
-
-(defun (setf window-text) (value hwnd &aux (hwnd (hwnd hwnd)))
-  (win32:set-window-text hwnd value)
+  (set-cursor-position (car value) (cdr value))
   value)
 
 (defmacro defwndproc (name (hwnd msg wparam lparam) &body body)
