@@ -122,6 +122,11 @@
              (win32-error last-error))
            (tstring-to-lisp buf :count res)))))))
 
+(defun (setf hwnd-text) (value hwnd &aux (hwnd (hwnd hwnd)))
+  (or (win32:set-window-text hwnd value)
+      (win32-error))
+  value)
+
 (declaim (type (function (cffi:foreign-pointer (signed-byte #.(* (cffi:foreign-type-size :pointer) 8))) (values boolean &rest t))
                %*map-windows-fn*))
 (defvar %*map-windows-fn*)
