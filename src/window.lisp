@@ -111,7 +111,10 @@
 Ensures correct context and dispatches to `call-wndproc'"
   (let ((hwnd-addr (cffi:pointer-address hwnd)))
     (case msg
-      (#.win32:+wm-getminmaxinfo+
+      ;; TODO - Looks like when a child window is created the first message
+      ;;        it receives is nccreate, as opposed to getminmaxinfo
+      ;;        need to investigate this more
+      ((#.win32:+wm-getminmaxinfo+ #.win32:+wm-nccreate+)
        ;; Special hook to catch initial window creation
        (when (boundp '%*creating-window*)
          (setf (slot-value %*creating-window* '%hwnd-wrapper) %*creating-hwnd-wrapper*
