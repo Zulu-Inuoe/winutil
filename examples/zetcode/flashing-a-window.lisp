@@ -22,6 +22,7 @@
                                           :x 10 :y 10 :width 80 :height 25
                                           :parent window :menu 1))
     (#.win32:+wm-command+
+     ;; TODO - Flashing a window can get a nice wrapper for it in winutil
      (cffi:with-foreign-object (fwi 'win32:flashwindowinfo)
        (cffi:with-foreign-slots ((win32:size win32:flags win32:timeout win32:hwnd win32:count)
                                  fwi win32:flashwindowinfo)
