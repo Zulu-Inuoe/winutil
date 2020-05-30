@@ -1,39 +1,5 @@
 (in-package #:winutil)
 
-(defclass window (disposable)
-  ((%wndclass-wrapper
-    :type wndclass-wrapper)
-   (%hwnd-wrapper
-    :type hwnd-wrapper))
-  (:documentation
-   "Higher level interface to an `hwnd' allowing for generic function dispatch of wndproc"))
-
-(defgeneric call-wndproc (window msg wparam lparam)
-  (:method (window msg wparam lparam)
-    "Try getting the hwnd of `window' and calling its wndproc."
-    (let ((hwnd (hwnd window)))
-      (cffi:foreign-funcall-pointer (cffi:make-pointer (win32:get-window-long-ptr hwnd win32:+gwl-wndproc+))
-                                    (:convention :stdcall)
-                                    win32:hwnd hwnd
-                                    win32:uint msg
-                                    win32:wparam wparam
-                                    win32:lparam lparam)))
-
-  (:method :around ((window window) msg wparam lparam)
-    ;; Guard against already-disposed windows
-    (when (disposedp window)
-      (error "The window ~A has already been disposed." window))
-    (call-next-method))
-  (:method ((window window) msg wparam lparam)
-    "Pass to def-window-proc"
-    ;; The window may have been disposed by a more
-    ;; specialized method which then used `call-next-method'
-    (if (not (disposedp window))
-        (win32:def-window-proc (hwnd window) msg wparam lparam)
-        0))
-  (:documentation
-   "Invokes the wndproc of `window' with the given arguments."))
-
 (defclass window-manager ()
   ((%wndclass-wrapper
     :type wndclass-wrapper)
@@ -113,9 +79,44 @@
 (defvar %*windows* (make-hash-table)
   "Table of created `window' instances")
 
+(defclass window (disposable)
+  ((%wndclass-wrapper
+    :type wndclass-wrapper)
+   (%hwnd-wrapper
+    :type hwnd-wrapper))
+  (:documentation
+   "Higher level interface to an `hwnd' allowing for generic function dispatch of wndproc"))
+
+(declaim (type window %*creating-window*))
 (defvar %*creating-window* nil
   "The `window' currently being created")
 (makunbound '%*creating-window*)
+
+(defgeneric call-wndproc (window msg wparam lparam)
+  (:method (window msg wparam lparam)
+    "Try getting the hwnd of `window' and calling its wndproc."
+    (let ((hwnd (hwnd window)))
+      (cffi:foreign-funcall-pointer (cffi:make-pointer (win32:get-window-long-ptr hwnd win32:+gwl-wndproc+))
+                                    (:convention :stdcall)
+                                    win32:hwnd hwnd
+                                    win32:uint msg
+                                    win32:wparam wparam
+                                    win32:lparam lparam)))
+
+  (:method :around ((window window) msg wparam lparam)
+    ;; Guard against already-disposed windows
+    (when (disposedp window)
+      (error "The window ~A has already been disposed." window))
+    (call-next-method))
+  (:method ((window window) msg wparam lparam)
+    "Pass to def-window-proc"
+    ;; The window may have been disposed by a more
+    ;; specialized method which then used `call-next-method'
+    (if (not (disposedp window))
+        (win32:def-window-proc (hwnd window) msg wparam lparam)
+        0))
+  (:documentation
+   "Invokes the wndproc of `window' with the given arguments."))
 
 (defwndproc %window-wndproc (hwnd msg wparam lparam)
   "wndproc used for `window' subclasses.
