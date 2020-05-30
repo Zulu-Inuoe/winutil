@@ -8,8 +8,6 @@
   (:documentation
    "Higher level interface to an `hwnd' allowing for generic function dispatch of wndproc"))
 
-(defvar %*windows* (make-hash-table))
-
 (defgeneric call-wndproc (window msg wparam lparam)
   (:method (window msg wparam lparam)
     "Try getting the hwnd of `window' and calling its wndproc."
@@ -111,6 +109,9 @@
   (unless %*window-manager*
     (setf %*window-manager* (make-instance 'window-manager)))
   %*window-manager*)
+
+(defvar %*windows* (make-hash-table)
+  "Table of created `window' instances")
 
 (defvar %*creating-window* nil
   "The `window' currently being created")
