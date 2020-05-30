@@ -7,9 +7,10 @@
    (%parent
     :initarg :parent)))
 
-(defvar %*creating-hwnd-wrapper* nil
-  "The `hwnd-wrapper' currently being created via `win32:create-window-ex'")
-(makunbound '%*creating-hwnd-wrapper*)
+(declaim (type hwnd-wrapper %*creating-hwnd-wrapper*))
+(defvar %*creating-hwnd-wrapper*)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (documentation '%*creating-hwnd-wrapper* 'variable) "The `hwnd-wrapper' currently being created via `win32:create-window-ex'"))
 
 (defmethod initialize-instance :after ((obj hwnd-wrapper)
                                        &key

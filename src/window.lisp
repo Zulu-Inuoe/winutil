@@ -88,9 +88,9 @@
    "Higher level interface to an `hwnd' allowing for generic function dispatch of wndproc"))
 
 (declaim (type window %*creating-window*))
-(defvar %*creating-window* nil
-  "The `window' currently being created")
-(makunbound '%*creating-window*)
+(defvar %*creating-window*)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (documentation '%*creating-window* 'variable) "The `window' currently being created"))
 
 (defgeneric call-wndproc (window msg wparam lparam)
   (:method (window msg wparam lparam)
