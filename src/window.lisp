@@ -20,9 +20,19 @@
                                     win32:uint msg
                                     win32:wparam wparam
                                     win32:lparam lparam)))
+
+  (:method :around ((window window) msg wparam lparam)
+    ;; Guard against already-disposed windows
+    (when (disposedp window)
+      (error "The window ~A has already been disposed." window))
+    (call-next-method))
   (:method ((window window) msg wparam lparam)
     "Pass to def-window-proc"
-    (win32:def-window-proc (hwnd window) msg wparam lparam))
+    ;; The window may have been disposed by a more
+    ;; specialized method which then used `call-next-method'
+    (if (not (disposedp window))
+        (win32:def-window-proc (hwnd window) msg wparam lparam)
+        0))
   (:documentation
    "Invokes the wndproc of `window' with the given arguments."))
 
