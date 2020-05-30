@@ -37,9 +37,9 @@
    "Invokes the wndproc of `window' with the given arguments."))
 
 (defclass window-manager ()
-  ((%wndclass
+  ((%wndclass-wrapper
     :type wndclass-wrapper)
-   (%hwnd
+   (%hwnd-wrapper
     :type hwnd-wrapper)
    (%destroyed-wndclasses
     :type list
@@ -92,20 +92,20 @@
                                   :background (cffi:null-pointer)
                                   :cursor (cffi:null-pointer)))
          (success nil))
-    (unwind-protect (with-slots (%wndclass %hwnd) window-manager
-                      (setf %hwnd (make-instance 'hwnd-wrapper
+    (unwind-protect (with-slots (%wndclass-wrapper %hwnd-wrapper) window-manager
+                      (setf %hwnd-wrapper (make-instance 'hwnd-wrapper
                                                  :wndclass wndclass
                                                  :name name
                                                  :x 0 :y 0 :width 0 :height 0
                                                  :ex-style 0
                                                  :parent win32:+hwnd-message+)
-                            %wndclass wndclass
+                            %wndclass-wrapper wndclass
                             success t))
       (unless success
         (dispose wndclass)))))
 
 (defmethod hwnd ((window-manager window-manager))
-  (hwnd (slot-value window-manager '%hwnd)))
+  (hwnd (slot-value window-manager '%hwnd-wrapper)))
 
 (defun %ensure-window-manager ()
   (unless %*window-manager*
