@@ -131,7 +131,7 @@ Ensures correct context and dispatches to `call-wndproc'"
              (win32:post-message (hwnd wm) +wm-window-destroyed+ 0 0))
            (dispose window))))
       (t
-       (call-wndproc (gethash (cffi:pointer-address hwnd) %*windows*) msg wparam lparam)))))
+       (call-wndproc (gethash hwnd-addr %*windows*) msg wparam lparam)))))
 
 (defmethod initialize-instance :after ((obj window)
                                        &key
