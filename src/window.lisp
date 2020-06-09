@@ -1,81 +1,5 @@
 (in-package #:winutil)
 
-(defclass window-manager ()
-  ((%wndclass-wrapper
-    :type wndclass-wrapper)
-   (%hwnd-wrapper
-    :type hwnd-wrapper)
-   (%destroyed-wndclasses
-    :type list
-    :initform nil))
-  (:documentation
-   "Container for wndclass+hwnd who's wndproc shall `dispose' of `window' instances.
- This is necessary because otherwise we would attempt to `win32:unregister-class' while a `window' was still using it."))
-
-(declaim (type (or null window-manager) %*window-manager*))
-(defvar %*window-manager* nil
-  "The current thread's `window-manager'.")
-
-(pushnew '(%*window-manager* . nil) bt:*default-special-bindings* :test #'equal)
-
-(when (find-package #1='#:slynk)
-  (pushnew '(%*window-manager* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
-
-(defconstant +wm-window-destroyed+ (+ win32:+wm-user+ 0))
-
-(defwndproc %window-manager-wndproc (hwnd msg wparam lparam)
-  (case msg
-    (#.+wm-window-destroyed+
-     (with-slots (%destroyed-wndclasses) %*window-manager*
-       (loop
-         :while %destroyed-wndclasses
-         :do (dispose (pop %destroyed-wndclasses))))
-     0)
-    (t
-     (win32:def-window-proc hwnd msg wparam lparam))))
-
-(defun %exe-name ()
-  "Get the current executable's path and type as <path>.<type>"
-  (let ((path (exe-pathname)))
-    (concatenate 'string (pathname-name path) "." (pathname-type path))))
-
-(defmethod initialize-instance :after ((window-manager window-manager) &key &allow-other-keys)
-  (let* ((name (format nil "WindowManager[~A;~A;0x~X]"
-                       (let ((name (%exe-name)))
-                         (if (<= (length name) 128)
-                             name
-                             (subseq name 0 128)))
-                       (let ((name (bt:thread-name (bt:current-thread))))
-                         (if (<= (length name) 64)
-                             name
-                             (subseq name 0 64)))
-                       (win32:get-current-thread-id)))
-         (wndclass (make-instance 'wndclass-wrapper
-                                  :name name
-                                  :wndproc (cffi:callback %window-manager-wndproc)
-                                  :background (cffi:null-pointer)
-                                  :cursor (cffi:null-pointer)))
-         (success nil))
-    (unwind-protect (with-slots (%wndclass-wrapper %hwnd-wrapper) window-manager
-                      (setf %hwnd-wrapper (make-instance 'hwnd-wrapper
-                                                 :wndclass wndclass
-                                                 :name name
-                                                 :x 0 :y 0 :width 0 :height 0
-                                                 :ex-style 0
-                                                 :parent win32:+hwnd-message+)
-                            %wndclass-wrapper wndclass
-                            success t))
-      (unless success
-        (dispose wndclass)))))
-
-(defmethod hwnd ((window-manager window-manager))
-  (hwnd (slot-value window-manager '%hwnd-wrapper)))
-
-(defun %ensure-window-manager ()
-  (unless %*window-manager*
-    (setf %*window-manager* (make-instance 'window-manager)))
-  %*window-manager*)
-
 (defvar %*windows* (make-hash-table)
   "Table of created `window' instances")
 
@@ -91,6 +15,22 @@
 (defvar %*creating-window*)
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (setf (documentation '%*creating-window* 'variable) "The `window' currently being created"))
+
+(declaim (type (or null (cons cffi:foreign-pointer list)) %*wndclass-manager-hook*))
+(defvar %*wndclass-manager-hook* nil)
+(pushnew '(%*wndclass-manager-hook* . nil) bt:*default-special-bindings* :test #'equal)
+(when (find-package #1='#:slynk)
+  (pushnew '(%*wndclass-manager-hook* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
+
+(defmsgproc window-manager-hook (code wparam msg)
+  "Hook for cleaning up wndclass instances after their `window' has been destroyed."
+  (loop
+    :for wndclass :in (nreverse (cdr %*wndclass-manager-hook*))
+    :do (dispose wndclass))
+  (or (win32:unhook-windows-hook-ex (car %*wndclass-manager-hook*))
+      (win32-error))
+  (setf %*wndclass-manager-hook* nil)
+  (win32:call-next-hook-ex (cffi:null-pointer) code wparam msg))
 
 (defgeneric call-wndproc (window msg wparam lparam)
   (:method (window msg wparam lparam)
@@ -118,6 +58,15 @@
   (:documentation
    "Invokes the wndproc of `window' with the given arguments."))
 
+(defun %ensure-wndclass-manager ()
+  (unless %*wndclass-manager-hook*
+    (setf %*wndclass-manager-hook* (list (not-null-or-error
+                                          (win32:set-windows-hook-ex
+                                           win32:+wh-getmessage+
+                                           (cffi:callback window-manager-hook)
+                                           (cffi:null-pointer)
+                                           (win32:get-current-thread-id)))))))
+
 (defwndproc %window-wndproc (hwnd msg wparam lparam)
   "wndproc used for `window' subclasses.
 Ensures correct context and dispatches to `call-wndproc'"
@@ -140,13 +89,16 @@ Ensures correct context and dispatches to `call-wndproc'"
            (remhash hwnd-addr %*windows*)
            (slot-makunbound (slot-value window '%hwnd-wrapper) '%hwnd)
            (slot-makunbound window '%hwnd-wrapper)
-           (let ((wm (%ensure-window-manager)))
-             (push (slot-value window '%wndclass-wrapper) (slot-value wm '%destroyed-wndclasses))
-             (slot-makunbound window '%wndclass-wrapper)
-             (win32:post-message (hwnd wm) +wm-window-destroyed+ 0 0))
+           (%ensure-wndclass-manager)
+           (push (slot-value window '%wndclass-wrapper) (cdr %*wndclass-manager-hook*))
            (dispose window))))
       (t
        (call-wndproc (gethash hwnd-addr %*windows*) msg wparam lparam)))))
+
+(defun %exe-name ()
+  "Get the current executable's path and type as <path>.<type>"
+  (let ((path (exe-pathname)))
+    (concatenate 'string (pathname-name path) "." (pathname-type path))))
 
 (defmethod initialize-instance :after ((obj window)
                                        &key

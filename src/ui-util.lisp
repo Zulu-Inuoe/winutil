@@ -155,6 +155,42 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
                   (return (win32:def-window-proc ,hwnd ,msg ,wparam ,lparam))))))))
      ',name))
 
+(defmacro defmsgproc (name (code wparam msg) &body body)
+  "Utility Wrapper around `cffi:defcallback' for defining timerproc callbacks.
+Defines a `cffi:callback' with appropriate signature, a well as a regular `defun'.
+The callback shall not be redefined on repeated evaluation, but instead the `defun' will, allowing for better livecoding.
+
+`name' - The name of the callback and function
+`code'  - Symbol bound to the code parameter
+`wparam' - Symbol bound to the wparam parameter
+`msg' - Symbol bound to the msg parameter"
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (defun ,name (,code ,wparam ,msg)
+       (declare (type (signed-byte #.(* 8 (cffi:foreign-type-size :int))) ,code)
+                (type wparam ,wparam)
+                (type lparam ,msg))
+       ,@body)
+     ;; There's no way to check if the callback is already defined
+     ;; But `cffi:get-callback' will signal an error if it doesn't exist
+     (handler-case
+         (cffi:get-callback ',name)
+       (error ()
+         (cffi:defcallback (,name :convention :stdcall) win32:lresult
+             ((,code :int) (,wparam win32:wparam) (,msg win32:lparam))
+           (prog ()
+            retry
+              (restart-case (let ((ret (,name ,code ,wparam ,msg)))
+                              (unless (typep ret 'lresult)
+                                (error 'type-error :datum ret :expected-type 'lresult))
+                              (return ret))
+                (retry-msgproc ()
+                  :report ,(format nil "Retry calling the msgproc (~A)." name)
+                  (go retry))
+                (call-next-hook ()
+                  :report "Invoke `win32:call-next-hook-ex'"
+                  (return (win32:call-next-hook-ex (cffi:null-pointer) ,code ,wparam ,msg))))))))
+     ',name))
+
 (defun message-pump ()
   "Run a typical win32 message pump until quit."
   (cffi:with-foreign-object (msg 'win32:msg)
