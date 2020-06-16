@@ -78,6 +78,11 @@
    #:hwnd-height
    #:hwnd-text
 
+   #:client-to-screen
+   #:client-to-screen*
+   #:screen-to-client
+   #:screen-to-client*
+
    #:hwnd-wrapper
    #:hwnd-wrapper-hwnd
 

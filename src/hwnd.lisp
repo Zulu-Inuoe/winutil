@@ -136,6 +136,32 @@
       (win32-error))
   value)
 
+(defun client-to-screen (hwnd x y &aux (hwnd (hwnd hwnd)))
+  (cffi:with-foreign-object (point 'win32:point)
+    (cffi:with-foreign-slots ((win32:x win32:y) point win32:point)
+      (setf win32:x x
+            win32:y y)
+      (or (win32:client-to-screen hwnd point)
+          (win32-error))
+      (values win32:x win32:y))))
+
+(defun client-to-screen* (hwnd point)
+  (multiple-value-bind (x y) (client-to-screen hwnd (car point) (cdr point))
+    (cons x y)))
+
+(defun screen-to-client (hwnd x y &aux (hwnd (hwnd hwnd)))
+  (cffi:with-foreign-object (point 'win32:point)
+    (cffi:with-foreign-slots ((win32:x win32:y) point win32:point)
+      (setf win32:x x
+            win32:y y)
+      (or (win32:screen-to-client hwnd point)
+          (win32-error))
+      (values win32:x win32:y))))
+
+(defun screen-to-client* (hwnd point)
+  (multiple-value-bind (x y) (screen-to-client hwnd (car point) (cdr point))
+    (cons x y)))
+
 (declaim (type (function (cffi:foreign-pointer lparam) (values boolean &rest t))
                %*map-windows-fn*))
 (defvar %*map-windows-fn*)
