@@ -11,7 +11,8 @@
    (:file "the-escape-key")
    (:file "moving-a-window")
    (:file "flashing-a-window")
-   (:file "a-simple-menu"))
+   (:file "a-simple-menu")
+   (:file "a-popup-menu"))
   :depends-on
   (#:cffi
    #:win32
