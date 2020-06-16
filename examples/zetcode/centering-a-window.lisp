@@ -35,7 +35,7 @@
 
 (defun main (&optional argv)
   (declare (ignore argv))
-  (let ((window (make-instance 'centeting-a-window)))
+  (let ((window (make-instance 'centering-a-window)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))
     (winutil:message-pump)))
