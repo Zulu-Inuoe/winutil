@@ -1,7 +1,9 @@
 (defpackage #:com.inuoe.winutil.examples.centering-a-window
   (:use #:cl)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
-   #:centering-a-window))
+   #:main))
 
 (in-package #:com.inuoe.winutil.examples.centering-a-window)
 
@@ -31,7 +33,8 @@
 
   (call-next-method))
 
-(defun centering-a-window ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'centeting-a-window)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))

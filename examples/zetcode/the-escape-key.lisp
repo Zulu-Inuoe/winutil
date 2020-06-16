@@ -1,7 +1,9 @@
 (defpackage #:com.inuoe.winutil.examples.the-escape-key
   (:use #:cl)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
-   #:the-escape-key))
+   #:main))
 
 (in-package #:com.inuoe.winutil.examples.the-escape-key)
 
@@ -26,7 +28,8 @@
      (win32:post-quit-message 0)))
   (call-next-method))
 
-(defun the-escape-key ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'the-escape-key)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))

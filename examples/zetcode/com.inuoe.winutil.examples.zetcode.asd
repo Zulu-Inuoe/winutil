@@ -13,6 +13,5 @@
    (:file "flashing-a-window"))
   :depends-on
   (#:cffi
-   #:uiop
    #:win32
    #:winutil))

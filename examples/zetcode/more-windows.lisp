@@ -1,7 +1,9 @@
 (defpackage #:com.inuoe.winutil.examples.more-windows
   (:use #:cl)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
-   #:more-windows))
+   #:main))
 
 (in-package #:com.inuoe.winutil.examples.more-windows)
 
@@ -63,7 +65,8 @@
      (return-from winutil:call-wndproc 0)))
   (call-next-method))
 
-(defun more-windows ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'more-windows)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))

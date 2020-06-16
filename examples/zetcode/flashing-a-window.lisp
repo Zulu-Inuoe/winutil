@@ -1,5 +1,8 @@
 (defpackage #:com.inuoe.winutil.examples.flashing-a-window
   (:use #:cl)
+  (:import-from #:cffi)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
    #:flashing-a-window))
 
@@ -36,7 +39,8 @@
      (win32:post-quit-message 0)))
   (call-next-method))
 
-(defun flashing-a-window ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'flashing-a-window)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))

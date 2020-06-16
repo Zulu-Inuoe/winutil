@@ -1,7 +1,9 @@
 (defpackage #:com.inuoe.winutil.examples.hot-key
   (:use #:cl)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
-   #:hot-key))
+   #:main))
 
 (in-package #:com.inuoe.winutil.examples.hot-key)
 
@@ -37,7 +39,8 @@
 
   (call-next-method))
 
-(defun hot-key ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'hot-key)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))

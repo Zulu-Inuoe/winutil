@@ -1,7 +1,9 @@
 (defpackage #:com.inuoe.winutil.examples.moving-a-window
   (:use #:cl)
+  (:import-from #:win32)
+  (:import-from #:winutil)
   (:export
-   #:moving-a-window))
+   #:main))
 
 (in-package #:com.inuoe.winutil.examples.moving-a-window)
 
@@ -52,7 +54,8 @@
      (win32:post-quit-message 0)))
   (call-next-method))
 
-(defun moving-a-window ()
+(defun main (&optional argv)
+  (declare (ignore argv))
   (let ((window (make-instance 'moving-a-window)))
     (when (find-package '#:slynk)
       (win32:show-window (winutil:hwnd window) win32:+sw-show+))
