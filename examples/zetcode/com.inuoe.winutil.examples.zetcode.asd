@@ -10,7 +10,8 @@
    (:file "more-windows")
    (:file "the-escape-key")
    (:file "moving-a-window")
-   (:file "flashing-a-window"))
+   (:file "flashing-a-window")
+   (:file "a-simple-menu"))
   :depends-on
   (#:cffi
    #:win32
