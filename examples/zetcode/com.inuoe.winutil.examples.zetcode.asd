@@ -12,7 +12,8 @@
    (:file "moving-a-window")
    (:file "flashing-a-window")
    (:file "a-simple-menu")
-   (:file "a-popup-menu"))
+   (:file "a-popup-menu")
+   (:file "a-check-menu-item"))
   :depends-on
   (#:cffi
    #:win32
