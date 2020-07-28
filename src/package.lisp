@@ -91,6 +91,7 @@
 
    #:window
    #:call-wndproc
+   #:defmsg-method
 
    #:message-only-window
 

@@ -58,6 +58,35 @@
   (:documentation
    "Invokes the wndproc of `window' with the given arguments."))
 
+(defmacro defmsg-method (msg (window &key wparam lparam) &body body)
+  (multiple-value-bind (msg name)
+      (etypecase msg
+        (atom (values msg nil))
+        (cons (values (second msg) (first msg))))
+    (let* ((msg-sym (gensym "MSG"))
+           (wparam-sym (or wparam (gensym "WPARAM")))
+           (lparam-sym (or lparam (gensym "LPARAM")))
+           (window-sym (etypecase window
+                         (symbol window)
+                         (cons (first window))))
+           (defmethod-form
+             `(defmethod call-wndproc (,window (,msg-sym (eql ,msg)) ,wparam-sym ,lparam-sym)
+                (declare (ignore ,msg-sym ,@(unless wparam `(,wparam-sym)) ,@(unless lparam `(,lparam-sym))))
+                ,@body)))
+      (if name
+          `(progn
+             (defun ,name (,window-sym ,@(cond
+                                           ((and wparam lparam)
+                                            `(&key ,wparam-sym ,lparam-sym))
+                                           (wparam
+                                            `(,wparam-sym))
+                                           (lparam
+                                            `(,lparam-sym))))
+               (prog1 (win32:send-message (hwnd ,window-sym) ,msg ,(if wparam `(wparam ,wparam-sym) '0) ,(if lparam `(lparam ,lparam-sym) 0))
+                 (check-last-error)))
+             ,defmethod-form)
+          defmethod-form))))
+
 (defun %ensure-wndclass-manager ()
   (unless %*wndclass-manager-hook*
     (setf %*wndclass-manager-hook* (list (not-null-or-error
