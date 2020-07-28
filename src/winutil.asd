@@ -24,6 +24,7 @@
    (:file "tray-icon" :depends-on ("package" "error" "util" "window")))
   :depends-on
   (#:alexandria
+   #:babel
    #:bordeaux-threads
    #:cffi
    #:dispose
