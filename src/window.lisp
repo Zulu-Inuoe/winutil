@@ -113,7 +113,8 @@ Ensures correct context and dispatches to `call-wndproc'"
 
        (call-wndproc (gethash hwnd-addr %*windows*) msg wparam lparam))
       (#.win32:+wm-ncdestroy+
-       (let ((window (gethash hwnd-addr %*windows*)))
+       (let ((window (or (gethash hwnd-addr %*windows*)
+                         (error "No registered window for 0x~V,'0X" #.(* 2 (cffi:foreign-type-size :pointer)) hwnd-addr))))
          (unwind-protect (call-wndproc window msg wparam lparam)
            (remhash hwnd-addr %*windows*)
            (slot-makunbound (slot-value window '%hwnd-wrapper) '%hwnd)
