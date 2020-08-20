@@ -135,22 +135,20 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
        ,@body)
      ;; There's no way to check if the callback is already defined
      ;; But `cffi:get-callback' will signal an error if it doesn't exist
-     (handler-case
-         (cffi:get-callback ',name)
+     (handler-case (cffi:get-callback ',name)
        (error ()
          (cffi:defcallback (,name :convention :stdcall) win32:lresult
              ((,hwnd win32:hwnd) (,msg win32:uint) (,wparam win32:wparam) (,lparam win32:lparam))
            (prog ()
             retry
-              (restart-case
-                  (let ((ret (,name ,hwnd ,msg ,wparam ,lparam)))
-                    (unless (typep ret 'lresult)
-                      (error 'type-error :datum ret :expected-type 'lresult))
-                    (return ret))
+              (restart-case (let ((ret (,name ,hwnd ,msg ,wparam ,lparam)))
+                              (unless (typep ret 'lresult)
+                                (error 'type-error :datum ret :expected-type 'lresult))
+                              (return ret))
                 (retry-wndproc ()
                   :report ,(format nil "Retry calling the wndproc (~A)." name)
                   (go retry))
-                (def-window-proc ()
+                (use-default-wndproc ()
                   :report "Call `win32:def-window-proc' and return its value."
                   (return (win32:def-window-proc ,hwnd ,msg ,wparam ,lparam))))))))
      ',name))
@@ -172,8 +170,7 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
        ,@body)
      ;; There's no way to check if the callback is already defined
      ;; But `cffi:get-callback' will signal an error if it doesn't exist
-     (handler-case
-         (cffi:get-callback ',name)
+     (handler-case (cffi:get-callback ',name)
        (error ()
          (cffi:defcallback (,name :convention :stdcall) win32:lresult
              ((,code :int) (,wparam win32:wparam) (,msg win32:lparam))

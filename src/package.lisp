@@ -93,6 +93,10 @@
    #:call-wndproc
    #:defmsg-method
 
+   ;; Restarts
+   #:retry-wndproc
+   #:use-default-wndproc
+
    #:message-only-window
 
    #:tray-icon
