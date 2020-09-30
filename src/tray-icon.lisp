@@ -21,6 +21,14 @@
 
 (pushnew '(%*tray-icon-window* . nil) bt:*default-special-bindings* :test #'equal)
 
+(defun %ensure-tray-icon-window ()
+  (or %*tray-icon-window*
+      (let ((name (format nil "Tray[~A(~A);~A]"
+                          (lisp-implementation-type)
+                          (lisp-implementation-version)
+                          (%make-guid))))
+        (setf %*tray-icon-window* (make-instance 'tray-icon-window :wndclass-name name :name name)))))
+
 (when (find-package #1='#:slynk)
   (pushnew '(%*tray-icon-window* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
 
@@ -87,16 +95,11 @@
             (win32-error))))))
 
 (defmethod initialize-instance :after ((tray-icon tray-icon) &key &allow-other-keys)
-  (unless %*tray-icon-window*
-    (let ((name (format nil "Tray[~A(~A);~A]"
-                        (lisp-implementation-type)
-                        (lisp-implementation-version)
-                        (%make-guid))))
-      (setf %*tray-icon-window* (make-instance 'tray-icon-window :wndclass-name name :name name))))
-  (with-slots (%id %tooltip) tray-icon
-    (with-slots (%existing-icons) %*tray-icon-window*
-      (setf %id (if %existing-icons (1+ (caar %existing-icons)) 0))
-      (push (cons %id tray-icon) %existing-icons)))
+  (let* ((window (%ensure-tray-icon-window))
+         (existing-icons (slot-value window '%existing-icons))
+         (id (if existing-icons (1+ (caar existing-icons)) 0)))
+    (setf (slot-value tray-icon '%id) id
+          (slot-value window '%existing-icons) (acons id tray-icon existing-icons)))
 
   (%tray-icon-notify tray-icon win32:+nim-add+))
 
