@@ -77,7 +77,8 @@
               win32:hwnd (hwnd %*tray-icon-window*)
               win32:id (slot-value tray-icon '%id)
               win32:flags (logior (if tooltip win32:+nif-tip+ 0)
-                                  win32:+nif-icon+ win32:+nif-message+)
+                                  win32:+nif-icon+
+                                  win32:+nif-message+)
               win32:callback-message %+tray-icon-message+
               win32:icon icon)
         (when tooltip
@@ -101,9 +102,7 @@
 
 (define-dispose (tray-icon tray-icon)
   (%tray-icon-notify tray-icon win32:+nim-delete+)
-  (with-slots (%existing-icons) %*tray-icon-window*
-    (with-slots (%id) tray-icon
-      (deletef %existing-icons %id :key #'car)))
+  (deletef (slot-value %*tray-icon-window* '%existing-icons) (slot-value tray-icon '%id) :key #'car)
   (slot-makunbound tray-icon '%id))
 
 (defmethod hwnd ((tray-icon tray-icon))
@@ -111,12 +110,10 @@
 
 (defgeneric (setf tray-icon-tooltip) (value tray-icon)
   (:method (value (tray-icon tray-icon))
-    (with-slots (%id %tooltip) tray-icon
-      (prog1 (setf %tooltip value)
-        (%tray-icon-notify tray-icon win32:+nim-modify+)))))
+    (prog1 (setf (slot-value tray-icon '%tooltip) value)
+      (%tray-icon-notify tray-icon win32:+nim-modify+))))
 
 (defgeneric (setf tray-icon-icon) (value tray-icon)
   (:method (value (tray-icon tray-icon))
-    (with-slots (%id %icon) tray-icon
-      (prog1 (setf %icon value)
-        (%tray-icon-notify tray-icon win32:+nim-modify+)))))
+    (prog1 (setf (slot-value tray-icon '%icon) value)
+      (%tray-icon-notify tray-icon win32:+nim-modify+))))
