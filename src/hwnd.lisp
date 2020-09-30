@@ -125,11 +125,9 @@
     (if (zerop len)
         ""
         (cffi:with-foreign-object (buf 'win32:tchar (1+ len))
-         (let ((res (win32:get-window-text hwnd buf (1+ len)))
-               (last-error (win32:get-last-error)))
-           (when (zerop len)
-             (win32-error last-error))
-           (tstring-to-lisp buf :count res))))))
+          (or (= len (win32:get-window-text hwnd buf (1+ len)))
+              (win32-error))
+          (tstring-to-lisp buf :count len)))))
 
 (defun (setf hwnd-text) (value hwnd &aux (hwnd (hwnd hwnd)))
   (or (win32:set-window-text hwnd value)
