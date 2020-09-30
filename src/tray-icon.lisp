@@ -81,7 +81,7 @@
               win32:callback-message %+tray-icon-message+
               win32:icon icon)
         (when tooltip
-          (lisp-to-tstring tooltip win32:tip 128))
+          (lisp-to-tstring tooltip win32:tip (cffi:foreign-slot-count 'win32:notify-icon-data 'win32:tip)))
         (or (win32:shell-notify-icon message nid)
             (win32-error))))))
 
