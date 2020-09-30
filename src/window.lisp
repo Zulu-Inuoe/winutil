@@ -96,6 +96,9 @@
                                            (cffi:null-pointer)
                                            (win32:get-current-thread-id)))))))
 
+;; TODO - There's no good recovery mechanism for when we hit an error
+;;        during window creation - the wndclass needs to be cleaned up, but
+;;        the window still exists and can't be cleaned up
 (defwndproc %window-wndproc (hwnd msg wparam lparam)
   "wndproc used for `window' subclasses.
 Ensures correct context and dispatches to `call-wndproc'"
