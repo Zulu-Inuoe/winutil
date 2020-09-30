@@ -105,8 +105,11 @@
 
 (define-dispose (tray-icon tray-icon)
   (%tray-icon-notify tray-icon win32:+nim-delete+)
-  (deletef (slot-value %*tray-icon-window* '%existing-icons) (slot-value tray-icon '%id) :key #'car)
-  (slot-makunbound tray-icon '%id))
+  (let ((id (slot-value tray-icon '%id)))
+    (slot-makunbound tray-icon '%id)
+    (unless (deletef (slot-value %*tray-icon-window* '%existing-icons) id :key #'car)
+      (unwind-protect (dispose %*tray-icon-window*)
+        (setf %*tray-icon-window* nil)))))
 
 (defmethod hwnd ((tray-icon tray-icon))
   (hwnd %*tray-icon-window*))
