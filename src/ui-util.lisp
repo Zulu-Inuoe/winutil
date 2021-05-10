@@ -139,18 +139,27 @@ The callback shall not be redefined on repeated evaluation, but instead the `def
        (error ()
          (cffi:defcallback (,name :convention :stdcall) win32:lresult
              ((,hwnd win32:hwnd) (,msg win32:uint) (,wparam win32:wparam) (,lparam win32:lparam))
-           (prog ()
-            retry
-              (restart-case (let ((ret (,name ,hwnd ,msg ,wparam ,lparam)))
-                              (unless (typep ret 'lresult)
-                                (error 'type-error :datum ret :expected-type 'lresult))
-                              (return ret))
-                (retry-wndproc ()
-                  :report ,(format nil "Retry calling the wndproc (~A)." name)
-                  (go retry))
-                (use-default-wndproc ()
-                  :report "Call `win32:def-window-proc' and return its value."
-                  (return (win32:def-window-proc ,hwnd ,msg ,wparam ,lparam))))))))
+           (prog (normal)
+              (return (unwind-protect
+                           (prog1 (prog ()
+                                   retry
+                                     (restart-case (let ((ret (,name ,hwnd ,msg ,wparam ,lparam)))
+                                                     (unless (typep ret 'lresult)
+                                                       (error 'type-error :datum ret :expected-type 'lresult))
+                                                     (return ret))
+                                       (retry-wndproc ()
+                                         :report ,(format nil "Retry calling the wndproc (~A)." name)
+                                         (go retry))
+                                       (use-default-wndproc ()
+                                         :report "Call `win32:def-window-proc' and return its value."
+                                         (return (win32:def-window-proc ,hwnd ,msg ,wparam ,lparam)))
+                                       (abort (&optional value)
+                                         :report "Return abort and return a specified value"
+                                         (return (or value 0)))))
+                             (setf normal t))
+                        (unless normal
+                          (warn ,(format nil "Caught abnormal unwind from ~A" name))
+                          (return 0))))))))
      ',name))
 
 (defmacro defmsgproc (name (code wparam msg) &body body)
