@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defun %make-guid ()
   "Create a randomly-generated 128-bit GUID in the form of a {} wrapped, 32-digit, hyphen-separated, hexadecimal string.

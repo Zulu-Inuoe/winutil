@@ -1,4 +1,4 @@
-(in-package :winutil)
+(in-package #:com.inuoe.winutil)
 
 (defun open-reg-key (hkey subkey &key (sam win32:+key-read+))
   (cffi:with-foreign-object (res-key 'win32:hkey)

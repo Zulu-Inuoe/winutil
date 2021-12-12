@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defgeneric wndclass-name (obj)
   (:documentation "Get wndclass-name from `obj'"))

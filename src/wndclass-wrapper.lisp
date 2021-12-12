@@ -1,6 +1,6 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
-(defclass wndclass-wrapper (disposable)
+(defclass wndclass-wrapper (d:disposable)
   ((%name
     :type string
     :initarg :name
@@ -63,7 +63,7 @@
       (or (/= class-atom 0) (win32-error))
       (setf (slot-value obj '%class-atom) (cffi:make-pointer class-atom)))))
 
-(define-dispose (obj wndclass-wrapper)
+(d:define-dispose (obj wndclass-wrapper)
   (or (win32:unregister-class (wndclass-wrapper-atom obj) (wndclass-wrapper-instance obj))
       (win32-error))
   (slot-makunbound obj '%class-atom))

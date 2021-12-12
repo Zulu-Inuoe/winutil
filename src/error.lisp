@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defun error-code-string (code)
   "Retrieve the string representation for `code'.
@@ -38,12 +38,12 @@ Returns two values:
   ((%code
     :type (unsigned-byte 32)
     :initarg :code
-    :initform (required-argument :code)
+    :initform (a:required-argument :code)
     :reader win32-error-code)
    (%string
     :type (or null string)
     :initarg :string
-    :initform (required-argument :string)
+    :initform (a:required-argument :string)
     :reader win32-error-string))
   (:report (lambda (c stream)
              (format stream "Win32 error ~D~:* (0x~X): \"~:[<unavailable>~;~:*~A~]\"" (win32-error-code c) (win32-error-string c)))))

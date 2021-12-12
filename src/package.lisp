@@ -1,8 +1,9 @@
-(defpackage #:winutil
-  (:use
-   #:alexandria
-   #:cl
-   #:dispose)
+(defpackage #:com.inuoe.winutil
+  (:use #:cl)
+  (:local-nicknames
+   (#:a #:alexandria)
+   (#:d #:com.inuoe.dispose)
+   (#:f #:com.inuoe.finalizer))
   (:export
    #:lisp-to-tstring
    #:tstring-to-lisp

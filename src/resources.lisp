@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defun %make-resource-data (rgba width height icon-p hotspot-x hotspot-y)
   "Creates a `vector' describing the icon or cursor resource."
@@ -71,7 +71,7 @@
     :type (simple-array (unsigned-byte 8) (*))
     :initarg :data))
   (:default-initargs
-   :data (required-argument :data)))
+   :data (a:required-argument :data)))
 
 (defmethod make-load-form ((resource resource) &optional environment)
   (declare (ignore environment))
@@ -86,7 +86,7 @@
   (defgeneric on-quit (obj))
   (defgeneric on-restore (obj))
 
-  (defclass restoreable (finalizable)
+  (defclass restoreable (f:finalizable)
     ((%weak-ptr
       :type sb-ext:weak-pointer)))
 
@@ -97,7 +97,7 @@
       (setf (slot-value obj '%weak-ptr) weak-ptr
             (gethash weak-ptr %*restoreables*) weak-ptr)))
 
-  (define-finalizer restoreable (%weak-ptr)
+  (f:define-finalizer restoreable (%weak-ptr)
     (remhash %weak-ptr %*restoreables*))
 
   (defmethod on-quit ((obj restoreable))
@@ -132,7 +132,7 @@
 (defclass icon-resource (resource
                          #+sbcl
                          restoreable
-                         finalizable)
+                         f:finalizable)
   ((%hicon
     :type cffi:foreign-pointer
     :reader hicon)))
@@ -147,7 +147,7 @@
 (defmethod initialize-instance :after ((icon-resource icon-resource) &key &allow-other-keys)
   (%initialize-hicon icon-resource))
 
-(define-finalizer icon-resource (%hicon)
+(f:define-finalizer icon-resource (%hicon)
   (win32:destroy-icon %hicon))
 
 #+sbcl
@@ -166,7 +166,7 @@
 (defclass cursor-resource (resource
                            #+sbcl
                            restoreable
-                           finalizable)
+                           f:finalizable)
   ((%hcursor
     :type cffi:foreign-pointer
     :reader hcursor)))
@@ -181,7 +181,7 @@
 (defmethod initialize-instance :after ((cursor-resource cursor-resource) &key &allow-other-keys)
   (%initialize-hcursor cursor-resource))
 
-(define-finalizer cursor-resource (%hcursor)
+(f:define-finalizer cursor-resource (%hcursor)
   (win32:destroy-cursor %hcursor))
 
 #+sbcl

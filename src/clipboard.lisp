@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defmacro with-open-clipboard ((&optional (owner '(cffi:null-pointer))) &body body)
   `(progn

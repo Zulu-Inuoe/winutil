@@ -1,4 +1,4 @@
-(defsystem #:winutil
+(defsystem #:com.inuoe.winutil
   :version "0.0.1"
   :description "Utility library for Windows programs."
   :author "Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>"
@@ -24,9 +24,9 @@
    (:file "tray-icon" :depends-on ("package" "error" "util" "window")))
   :depends-on
   (#:alexandria
-   #:babel
    #:bordeaux-threads
    #:cffi
-   #:dispose
+   #:com.inuoe.dispose
+   #:com.inuoe.finalizer
    #:win32
    #:uiop))

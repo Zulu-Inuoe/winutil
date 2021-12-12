@@ -1,9 +1,9 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defvar %*windows* (make-hash-table)
   "Table of created `window' instances")
 
-(defclass window (disposable)
+(defclass window (d:disposable)
   ((%wndclass-wrapper
     :type wndclass-wrapper)
    (%hwnd-wrapper
@@ -26,7 +26,7 @@
   "Hook for cleaning up wndclass instances after their `window' has been destroyed."
   (loop
     :for wndclass :in (nreverse (cdr %*wndclass-manager-hook*))
-    :do (dispose wndclass))
+    :do (d:dispose wndclass))
   (or (win32:unhook-windows-hook-ex (car %*wndclass-manager-hook*))
       (win32-error))
   (setf %*wndclass-manager-hook* nil)
@@ -45,14 +45,14 @@
 
   (:method :around ((window window) msg wparam lparam)
     ;; Guard against already-disposed windows
-    (when (disposedp window)
+    (when (d:disposedp window)
       (error "The window ~A has already been disposed." window))
     (call-next-method))
   (:method ((window window) msg wparam lparam)
     "Pass to def-window-proc"
     ;; The window may have been disposed by a more
     ;; specialized method which then used `call-next-method'
-    (if (not (disposedp window))
+    (if (not (d:disposedp window))
         (win32:def-window-proc (hwnd window) msg wparam lparam)
         0))
   (:documentation
@@ -91,7 +91,7 @@ Ensures correct context and dispatches to `call-wndproc'"
            (slot-makunbound window '%hwnd-wrapper)
            (%ensure-wndclass-manager)
            (push (slot-value window '%wndclass-wrapper) (cdr %*wndclass-manager-hook*))
-           (dispose window))))
+           (d:dispose window))))
       (t
        (call-wndproc (gethash hwnd-addr %*windows*) msg wparam lparam)))))
 
@@ -151,17 +151,17 @@ Ensures correct context and dispatches to `call-wndproc'"
                                                             :parent parent :menu menu :instance instance
                                                             :lparam lparam)))
              (unless (eq hwnd-wrapper (slot-value obj '%hwnd-wrapper))
-               (dispose hwnd-wrapper)
+               (d:dispose hwnd-wrapper)
                (error "Window initialization failed")))
            (setf success t))
       (unless success
         (slot-makunbound obj '%wndclass-wrapper)
-        (dispose wndclass-wrapper)))))
+        (d:dispose wndclass-wrapper)))))
 
-(define-dispose (obj window)
+(d:define-dispose (obj window)
   ;; Don't dispose wndclass - that'll be done by `window-manager',
   (when (slot-boundp obj '%hwnd-wrapper)
-    (dispose (slot-value obj '%hwnd-wrapper))))
+    (d:dispose (slot-value obj '%hwnd-wrapper))))
 
 (defmethod hwnd ((obj window))
   (hwnd (slot-value obj '%hwnd-wrapper)))

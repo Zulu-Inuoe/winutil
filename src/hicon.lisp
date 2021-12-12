@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defgeneric hicon (obj)
   (:documentation "Coerce `obj' into a `win32:hicon'")

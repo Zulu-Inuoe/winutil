@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defun lisp-to-tstring (string tchar-buf tchar-count &key (start 0) end (offset 0))
   "Convert from a lisp string to a `win32:lptstr' and write it into `tchar-buf'"

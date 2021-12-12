@@ -1,6 +1,6 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
-(defclass hwnd-wrapper (disposable)
+(defclass hwnd-wrapper (d:disposable)
   ((%hwnd
     :type cffi:foreign-pointer
     :reader hwnd-wrapper-hwnd)
@@ -14,7 +14,7 @@
 
 (defmethod initialize-instance :after ((obj hwnd-wrapper)
                                        &key
-                                         (wndclass (required-argument :wndclass))
+                                         (wndclass (a:required-argument :wndclass))
                                          (ex-style win32:+ws-ex-overlapped-window+)
                                          (name "MainWindow")
                                          (style win32:+ws-overlappedwindow+)
@@ -35,7 +35,7 @@
             x y width height
             (hwnd parent) (hmenu menu) instance lparam)))))
 
-(define-dispose (obj hwnd-wrapper)
+(d:define-dispose (obj hwnd-wrapper)
   (or (win32:destroy-window (hwnd-wrapper-hwnd obj))
       (win32-error))
   (slot-makunbound obj '%hwnd))

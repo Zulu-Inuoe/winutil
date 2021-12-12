@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defconstant %+tray-icon-message+ (+ win32:+wm-user+ 0)
   "Windows Message ID for tray icon events.")
@@ -24,7 +24,7 @@
 (when (find-package #1='#:slynk)
   (pushnew '(%*tray-icon-window* . nil) (symbol-value (find-symbol (string '#:*default-worker-thread-bindings*) #1#)) :test #'equal))
 
-(defclass tray-icon (disposable)
+(defclass tray-icon (d:disposable)
   ((%id
     :type (unsigned-byte 32))
    (%tooltip
@@ -99,11 +99,11 @@
 
   (%tray-icon-notify tray-icon win32:+nim-add+))
 
-(define-dispose (tray-icon tray-icon)
+(d:define-dispose (tray-icon tray-icon)
   (%tray-icon-notify tray-icon win32:+nim-delete+)
   (with-slots (%existing-icons) %*tray-icon-window*
     (with-slots (%id) tray-icon
-      (deletef %existing-icons %id :key #'car)))
+      (a:deletef %existing-icons %id :key #'car)))
   (slot-makunbound tray-icon '%id))
 
 (defmethod hwnd ((tray-icon tray-icon))

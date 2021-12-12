@@ -1,4 +1,4 @@
-(in-package #:winutil)
+(in-package #:com.inuoe.winutil)
 
 (defgeneric hwnd (obj)
   (:documentation "Coerce `obj' into an `hwnd'.")
@@ -127,7 +127,7 @@
         (cffi:with-foreign-object (buf 'win32:tchar (1+ len))
          (let ((res (win32:get-window-text hwnd buf (1+ len)))
                (last-error (win32:get-last-error)))
-           (when (zerop len)
+           (when (zerop res)
              (win32-error last-error))
            (tstring-to-lisp buf :count res))))))
 
