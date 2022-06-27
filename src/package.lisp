@@ -36,6 +36,7 @@
    #:lparam
    #:lresult
    #:defwndproc
+   #:defhookfn
    #:message-pump
 
    #:hicon
