@@ -36,7 +36,7 @@
    #:lparam
    #:lresult
    #:defwndproc
-   #:define-ll-keyboard-proc
+   #:defhookfn
    #:message-pump
 
    #:hicon
