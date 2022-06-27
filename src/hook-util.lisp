@@ -18,10 +18,7 @@ livecoding.
                 (type wparam ,wparam)
                 (type lparam ,lparam)
                 (ignorable ,ncode ,wparam ,lparam))
-       (flet ((call-next-hook ()
-                (win32:call-next-hook-ex (cffi:null-pointer) ,ncode ,wparam ,lparam)))
-         (declare (ignorable #'call-next-hook))
-         ,@body))
+       ,@body)
      ;; There's no way to check if the callback is already defined
      ;; But `cffi:get-callback' will signal an error if it doesn't exist
      (handler-case
